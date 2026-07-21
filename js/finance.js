@@ -63,6 +63,7 @@ export function initFinance({ root, uid, showToast }) {
     overview: root.querySelector("#finance-overview"),
     expenses: root.querySelector("#finance-expenses"),
     investments: root.querySelector("#finance-investments"),
+    lending: root.querySelector("#finance-lending"),
   };
 
   const statCards = root.querySelector("#finance-stat-cards");
@@ -95,13 +96,32 @@ export function initFinance({ root, uid, showToast }) {
   const investmentGroups = root.querySelector("#investment-groups");
   const investmentEmpty = root.querySelector("#investment-empty");
 
+  const loanDirection = root.querySelector("#loan-direction");
+  const loanPerson = root.querySelector("#loan-person");
+  const loanAmount = root.querySelector("#loan-amount");
+  const loanDate = root.querySelector("#loan-date");
+  const loanDueDate = root.querySelector("#loan-due-date");
+  const loanRate = root.querySelector("#loan-rate");
+  const loanNote = root.querySelector("#loan-note");
+  const loanAddBtn = root.querySelector("#loan-add-btn");
+  const loanFilterRow = root.querySelector("#loan-filters");
+  const loanListEl = root.querySelector("#loan-list");
+  const loanEmpty = root.querySelector("#loan-empty");
+
   let expenses = [];
   let investments = [];
   let netWorthHistory = [];
+  let loans = [];
+  let loanPayments = [];
   let editingExpenseId = null;
   let editingInvestmentId = null;
+  let editingLoanId = null;
+  let loggingPaymentForLoanId = null;
+  let loanFilter = "active"; // active | settled | all
   let periodMode = "month"; // day | month | year | all
   let periodAnchor = localDateStr();
+
+  loanDate.value = localDateStr();
 
   /* ---------------- Shared chart tooltip ---------------- */
   function showChartTooltip(el, valueText, labelText) {
@@ -246,7 +266,9 @@ export function initFinance({ root, uid, showToast }) {
 
   /* ---------------- Overview ---------------- */
   function renderOverview() {
-    const netWorth = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+    const investTotal = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+    const { receivable, payable, net: lendingNet } = lendingTotals();
+    const netWorth = investTotal + lendingNet;
 
     const now = new Date();
     const monthKey = localMonthStr(now);
@@ -262,7 +284,12 @@ export function initFinance({ root, uid, showToast }) {
       <div class="stat-card">
         <div class="label">Net worth</div>
         <div class="value">${money(netWorth)}</div>
-        <div class="sub">${investments.length} holding${investments.length === 1 ? "" : "s"}</div>
+        <div class="sub">${investments.length} holding${investments.length === 1 ? "" : "s"} + lending</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Lending balance</div>
+        <div class="value${lendingNet < 0 ? " negative" : ""}">${money(lendingNet)}</div>
+        <div class="sub">Owed to you ${money(receivable)} · You owe ${money(payable)}</div>
       </div>
       <div class="stat-card">
         <div class="label">Spent this month</div>
@@ -573,6 +600,333 @@ export function initFinance({ root, uid, showToast }) {
     })
   );
 
+  /* ---------------- Lending / borrowing ---------------- */
+  function loanPaymentsFor(loanId) {
+    return loanPayments.filter((p) => p.loanId === loanId).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  }
+  function accruedInterest(loan, asOfStr) {
+    if (!loan.interestRate) return 0;
+    const start = new Date(loan.date + "T00:00:00");
+    const end = new Date(asOfStr + "T00:00:00");
+    const days = Math.max(0, (end - start) / 86400000);
+    return (Number(loan.principal) || 0) * (Number(loan.interestRate) / 100) * (days / 365);
+  }
+  function loanPaidTotal(loanId) {
+    return loanPaymentsFor(loanId).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+  }
+  function loanOutstanding(loan) {
+    const interest = accruedInterest(loan, localDateStr());
+    const paid = loanPaidTotal(loan.id);
+    return Math.max(0, (Number(loan.principal) || 0) + interest - paid);
+  }
+  function lendingTotals() {
+    let receivable = 0;
+    let payable = 0;
+    for (const loan of loans) {
+      if (loan.settled) continue;
+      const outstanding = loanOutstanding(loan);
+      if (loan.direction === "lent") receivable += outstanding;
+      else payable += outstanding;
+    }
+    return { receivable, payable, net: receivable - payable };
+  }
+  function formatLoanDate(iso) {
+    if (!iso) return "";
+    return new Date(iso + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  loanFilterRow.querySelectorAll(".chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      loanFilter = chip.dataset.filter;
+      loanFilterRow.querySelectorAll(".chip").forEach((c) => c.classList.toggle("active", c === chip));
+      renderLoans();
+    });
+  });
+
+  function buildLoanEditForm(loan) {
+    const wrap = document.createElement("div");
+    wrap.className = "expense-row-edit";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "stretch";
+    wrap.innerHTML = `
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <select class="edit-direction">
+          <option value="lent">I lent</option>
+          <option value="borrowed">I borrowed</option>
+        </select>
+        <input type="text" class="edit-person" placeholder="Person" value="${escapeAttr(loan.person)}">
+        <input type="number" inputmode="decimal" step="0.01" class="edit-principal" value="${loan.principal}">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <input type="date" class="edit-date" value="${loan.date || ""}">
+        <input type="date" class="edit-due-date" value="${loan.dueDate || ""}">
+        <input type="number" inputmode="decimal" step="0.1" class="edit-rate" placeholder="Interest %/yr" value="${loan.interestRate ?? ""}">
+        <input type="text" class="edit-note" placeholder="Note" value="${escapeAttr(loan.note)}" style="flex:1;min-width:100px;">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-primary save-btn" style="width:auto;padding:8px 16px;">Save</button>
+        <button class="btn btn-ghost cancel-btn" style="width:auto;padding:8px 16px;">Cancel</button>
+      </div>
+    `;
+    wrap.querySelector(".edit-direction").value = loan.direction;
+    wrap.querySelector(".save-btn").addEventListener("click", async () => {
+      const principal = parseFloat(wrap.querySelector(".edit-principal").value);
+      if (!principal || principal <= 0) {
+        showToast("Enter a valid amount");
+        return;
+      }
+      try {
+        await updateItem(uid, "loans", loan.id, {
+          direction: wrap.querySelector(".edit-direction").value,
+          person: wrap.querySelector(".edit-person").value.trim(),
+          principal,
+          date: wrap.querySelector(".edit-date").value || loan.date,
+          dueDate: wrap.querySelector(".edit-due-date").value || null,
+          interestRate: parseFloat(wrap.querySelector(".edit-rate").value) || null,
+          note: wrap.querySelector(".edit-note").value.trim(),
+        });
+        editingLoanId = null;
+        renderLoans();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    wrap.querySelector(".cancel-btn").addEventListener("click", () => {
+      editingLoanId = null;
+      renderLoans();
+    });
+    return wrap;
+  }
+
+  function buildPaymentLogForm(loan) {
+    const wrap = document.createElement("div");
+    wrap.className = "loan-payment-form";
+    wrap.innerHTML = `
+      <input type="number" inputmode="decimal" step="0.01" class="pay-amount" placeholder="Amount">
+      <input type="date" class="pay-date">
+      <button class="icon-save" aria-label="Save payment"><svg viewBox="0 0 20 20"><use href="#icon-check"/></svg></button>
+      <button class="icon-x" aria-label="Cancel"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg></button>
+    `;
+    wrap.querySelector(".pay-date").value = localDateStr();
+    wrap.querySelector(".icon-save").addEventListener("click", async () => {
+      const amount = parseFloat(wrap.querySelector(".pay-amount").value);
+      if (!amount || amount <= 0) {
+        showToast("Enter a valid amount");
+        return;
+      }
+      try {
+        await addItem(uid, "loanPayments", {
+          loanId: loan.id,
+          amount,
+          date: wrap.querySelector(".pay-date").value || localDateStr(),
+        });
+        loggingPaymentForLoanId = null;
+        renderLoans();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    wrap.querySelector(".icon-x").addEventListener("click", () => {
+      loggingPaymentForLoanId = null;
+      renderLoans();
+    });
+    return wrap;
+  }
+
+  async function deleteLoanWithPayments(loanId) {
+    try {
+      await Promise.all(loanPaymentsFor(loanId).map((p) => deleteItem(uid, "loanPayments", p.id)));
+      await deleteItem(uid, "loans", loanId);
+    } catch (err) {
+      showToast(err.message);
+    }
+  }
+
+  function buildLoanCard(loan, index) {
+    const card = document.createElement("div");
+    card.className = "loan-card anim-in" + (loan.settled ? " settled" : "");
+    card.style.setProperty("--stagger", Math.min(index, 8) * 15 + "ms");
+
+    if (loan.id === editingLoanId) {
+      card.appendChild(buildLoanEditForm(loan));
+      return card;
+    }
+
+    const interest = accruedInterest(loan, localDateStr());
+    const paid = loanPaidTotal(loan.id);
+    const outstanding = loanOutstanding(loan);
+    const isReceivable = loan.direction === "lent";
+    const denom = (Number(loan.principal) || 0) + interest;
+    const pct = denom > 0 ? Math.min(100, (paid / denom) * 100) : 0;
+
+    const top = document.createElement("div");
+    top.className = "loan-top";
+    top.innerHTML = `
+      <span class="loan-direction-badge ${loan.direction}"></span>
+      <span class="loan-person"></span>
+      <button class="icon-edit" aria-label="Edit"><svg viewBox="0 0 20 20"><use href="#icon-edit"/></svg></button>
+      <button class="icon-x" aria-label="Delete"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg></button>
+    `;
+    top.querySelector(".loan-direction-badge").textContent = loan.direction === "lent" ? "Lent" : "Borrowed";
+    top.querySelector(".loan-person").textContent = loan.person || "Unnamed";
+    top.querySelector(".icon-edit").addEventListener("click", () => {
+      editingLoanId = loan.id;
+      renderLoans();
+    });
+    top.querySelector(".icon-x").addEventListener("click", () => {
+      if (!confirm(`Delete this loan with ${loan.person || "this person"}? Its payment history will be removed too.`)) return;
+      deleteLoanWithPayments(loan.id);
+    });
+    card.appendChild(top);
+
+    const amounts = document.createElement("div");
+    amounts.className = "loan-amounts";
+    function amountRow(label, valueText) {
+      const span = document.createElement("span");
+      span.append(label + " ", Object.assign(document.createElement("b"), { textContent: valueText }));
+      amounts.appendChild(span);
+    }
+    amountRow("Principal:", money(loan.principal));
+    if (loan.interestRate) amountRow(`Interest ${loan.interestRate}%/yr:`, money(interest));
+    amountRow("Paid:", money(paid));
+    card.appendChild(amounts);
+
+    const outRow = document.createElement("div");
+    outRow.className = "loan-outstanding-row";
+    outRow.innerHTML = `
+      <span class="loan-outstanding-label">Outstanding</span>
+      <span class="loan-outstanding-value ${isReceivable ? "receivable" : "payable"}"></span>
+    `;
+    outRow.querySelector(".loan-outstanding-value").textContent = money(outstanding);
+    card.appendChild(outRow);
+
+    const track = document.createElement("div");
+    track.className = "loan-progress-track";
+    track.innerHTML = `<div class="loan-progress-fill" style="width:${pct}%"></div>`;
+    card.appendChild(track);
+
+    const meta = document.createElement("div");
+    meta.className = "loan-meta";
+    const sinceChip = document.createElement("span");
+    sinceChip.textContent = "Since " + formatLoanDate(loan.date);
+    meta.appendChild(sinceChip);
+    if (loan.dueDate) {
+      const overdue = !loan.settled && outstanding > 0 && loan.dueDate < localDateStr();
+      const dueChip = document.createElement("span");
+      dueChip.className = "due-chip" + (overdue ? " overdue" : "");
+      dueChip.textContent = "Due " + formatLoanDate(loan.dueDate);
+      meta.appendChild(dueChip);
+    }
+    if (loan.note) {
+      const noteSpan = document.createElement("span");
+      noteSpan.textContent = "· " + loan.note;
+      meta.appendChild(noteSpan);
+    }
+    card.appendChild(meta);
+
+    if (loan.settled) {
+      const badge = document.createElement("span");
+      badge.className = "settled-badge";
+      badge.textContent = "Settled";
+      card.appendChild(badge);
+    } else {
+      const actions = document.createElement("div");
+      actions.className = "loan-actions";
+      actions.innerHTML = `
+        <button class="btn btn-ghost log-payment-btn">Log payment</button>
+        <button class="btn btn-ghost settle-btn">Mark settled</button>
+      `;
+      actions.querySelector(".log-payment-btn").addEventListener("click", () => {
+        loggingPaymentForLoanId = loggingPaymentForLoanId === loan.id ? null : loan.id;
+        renderLoans();
+      });
+      actions.querySelector(".settle-btn").addEventListener("click", () => {
+        updateItem(uid, "loans", loan.id, { settled: true }).catch((err) => showToast(err.message));
+      });
+      card.appendChild(actions);
+
+      if (loggingPaymentForLoanId === loan.id) {
+        card.appendChild(buildPaymentLogForm(loan));
+      }
+    }
+
+    const payments = loanPaymentsFor(loan.id);
+    if (payments.length) {
+      const list = document.createElement("div");
+      list.className = "loan-payments-list";
+      payments.forEach((p) => {
+        const row = document.createElement("div");
+        row.className = "loan-payment-row";
+        row.innerHTML = `
+          <span class="amount"></span>
+          <span class="date"></span>
+          <button class="icon-x" aria-label="Delete payment"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg></button>
+        `;
+        row.querySelector(".amount").textContent = money(p.amount);
+        row.querySelector(".date").textContent = formatLoanDate(p.date);
+        row.querySelector(".icon-x").addEventListener("click", () => {
+          if (!confirm("Remove this payment record?")) return;
+          deleteItem(uid, "loanPayments", p.id).catch((err) => showToast(err.message));
+        });
+        list.appendChild(row);
+      });
+      card.appendChild(list);
+    }
+
+    return card;
+  }
+
+  function renderLoans() {
+    let visible = loans;
+    if (loanFilter === "active") visible = loans.filter((l) => !l.settled);
+    if (loanFilter === "settled") visible = loans.filter((l) => l.settled);
+
+    loanEmpty.classList.toggle("hidden", visible.length > 0);
+    loanListEl.innerHTML = "";
+    visible.forEach((loan, i) => loanListEl.appendChild(buildLoanCard(loan, i)));
+  }
+
+  async function addLoan() {
+    const amount = parseFloat(loanAmount.value);
+    if (!amount || amount <= 0) {
+      showToast("Enter a valid amount");
+      return;
+    }
+    if (!loanPerson.value.trim()) {
+      showToast("Enter who this loan is with");
+      return;
+    }
+    loanAddBtn.disabled = true;
+    try {
+      await addItem(uid, "loans", {
+        direction: loanDirection.value,
+        person: loanPerson.value.trim(),
+        principal: amount,
+        date: loanDate.value || localDateStr(),
+        dueDate: loanDueDate.value || null,
+        interestRate: parseFloat(loanRate.value) || null,
+        note: loanNote.value.trim(),
+        settled: false,
+      });
+      loanPerson.value = "";
+      loanAmount.value = "";
+      loanDueDate.value = "";
+      loanRate.value = "";
+      loanNote.value = "";
+      loanPerson.focus();
+    } catch (err) {
+      showToast(err.message);
+    } finally {
+      loanAddBtn.disabled = false;
+    }
+  }
+  loanAddBtn.addEventListener("click", addLoan);
+  [loanPerson, loanAmount, loanNote].forEach((el) =>
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") addLoan();
+    })
+  );
+
   /* ---------------- Data subscriptions ---------------- */
   const unsubExpenses = watchCollection(uid, "expenses", "createdAt", (items, err) => {
     if (err) { showToast("Sync error: " + err.message); return; }
@@ -581,31 +935,52 @@ export function initFinance({ root, uid, showToast }) {
     renderExpenses();
     renderSpendingTrend();
   });
+  // Net worth (investments + lending balance) has no history before today —
+  // this starts a daily snapshot log going forward so the trend chart has
+  // something to plot over time. Any of the three collections that feed
+  // net worth can trigger it.
+  function maybeSnapshotNetWorth() {
+    if (investments.length === 0 && loans.length === 0) return;
+    const investTotal = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+    const netWorth = investTotal + lendingTotals().net;
+    const today = localDateStr();
+    setItem(uid, "netWorthHistory", today, { total: netWorth, date: today }).catch(() => {});
+  }
+
   const unsubInvestments = watchCollection(uid, "investments", "createdAt", (items, err) => {
     if (err) { showToast("Sync error: " + err.message); return; }
     investments = items;
     renderOverview();
     renderInvestments();
-
-    // Net worth has no history before today — this starts a daily snapshot
-    // log going forward so the trend chart has something to plot over time.
-    if (investments.length > 0) {
-      const netWorth = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
-      const today = localDateStr();
-      setItem(uid, "netWorthHistory", today, { total: netWorth, date: today }).catch(() => {});
-    }
+    maybeSnapshotNetWorth();
   });
   const unsubNetWorthHistory = watchCollection(uid, "netWorthHistory", "date", (items, err) => {
     if (err) { showToast("Sync error: " + err.message); return; }
     netWorthHistory = items;
     renderNetWorthTrend();
   }, "asc");
+  const unsubLoans = watchCollection(uid, "loans", "createdAt", (items, err) => {
+    if (err) { showToast("Sync error: " + err.message); return; }
+    loans = items;
+    renderOverview();
+    renderLoans();
+    maybeSnapshotNetWorth();
+  });
+  const unsubLoanPayments = watchCollection(uid, "loanPayments", "createdAt", (items, err) => {
+    if (err) { showToast("Sync error: " + err.message); return; }
+    loanPayments = items;
+    renderOverview();
+    renderLoans();
+    maybeSnapshotNetWorth();
+  });
 
   return {
     destroy: () => {
       unsubExpenses();
       unsubInvestments();
       unsubNetWorthHistory();
+      unsubLoans();
+      unsubLoanPayments();
       hideChartTooltip();
     },
   };

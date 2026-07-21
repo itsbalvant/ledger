@@ -58,6 +58,10 @@
     <symbol id="icon-check" viewBox="0 0 20 20">
       <path d="M4 10.5l3.5 3.5L16 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
+    <symbol id="icon-lending" viewBox="0 0 24 24">
+      <path d="M3 8h15m0 0l-4-4m4 4l-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M21 16H6m0 0l4-4m-4 4l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
   </defs>
 </svg>
 
@@ -222,6 +226,7 @@
         <button class="chip active" data-tab="overview">Overview</button>
         <button class="chip" data-tab="expenses">Expenses</button>
         <button class="chip" data-tab="investments">Investments</button>
+        <button class="chip" data-tab="lending">Lending</button>
       </div>
 
       <div class="view-body">
@@ -315,6 +320,35 @@
           <div class="empty-state hidden" id="investment-empty">
             <div class="glyph"><svg viewBox="0 0 24 24"><use href="#icon-invest"/></svg></div>
             <p>No holdings yet. Add an FD, bond, stock, or savings balance above.</p>
+          </div>
+        </div>
+
+        <!-- Lending -->
+        <div class="finance-pane hidden" id="finance-lending">
+          <div class="quick-add" style="margin:0 0 16px;flex-wrap:wrap;">
+            <select id="loan-direction">
+              <option value="lent">I lent</option>
+              <option value="borrowed">I borrowed</option>
+            </select>
+            <input id="loan-person" type="text" placeholder="Person" style="flex:1 1 130px;">
+            <input id="loan-amount" type="number" inputmode="decimal" step="0.01" placeholder="Amount" style="flex:1 1 100px;">
+            <input id="loan-date" type="date" title="Date">
+            <input id="loan-due-date" type="date" title="Due date (optional)">
+            <input id="loan-rate" type="number" inputmode="decimal" step="0.1" placeholder="Interest %/yr (optional)" style="flex:1 1 150px;">
+            <input id="loan-note" type="text" placeholder="Note (optional)" style="flex:1 1 130px;">
+            <button id="loan-add-btn" class="btn btn-primary" style="width:auto;padding:11px 18px;">Add</button>
+          </div>
+
+          <div class="filter-row" id="loan-filters">
+            <button class="chip active" data-filter="active">Active</button>
+            <button class="chip" data-filter="settled">Settled</button>
+            <button class="chip" data-filter="all">All</button>
+          </div>
+
+          <div class="loan-list" id="loan-list"></div>
+          <div class="empty-state hidden" id="loan-empty">
+            <div class="glyph"><svg viewBox="0 0 24 24"><use href="#icon-lending"/></svg></div>
+            <p>No loans tracked yet. Log money you've lent or borrowed above.</p>
           </div>
         </div>
 

@@ -798,6 +798,61 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   min-height: 1.2em;
 }
 
+/* ---------- Lending ---------- */
+.loan-list { display: flex; flex-direction: column; gap: 12px; }
+.loan-card {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 16px 18px;
+  box-shadow: var(--shadow);
+  transition: transform .15s var(--ease), box-shadow .15s var(--ease);
+}
+@media (hover: hover) {
+  .loan-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lift); }
+}
+.loan-card.settled { opacity: .6; }
+.loan-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.loan-direction-badge {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: 4px 9px; border-radius: 999px; flex-shrink: 0;
+}
+.loan-direction-badge.lent { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+.loan-direction-badge.borrowed { background: color-mix(in srgb, var(--red) 15%, transparent); color: var(--red); }
+.loan-person { font-size: 15px; font-weight: 700; flex: 1; min-width: 0; }
+.loan-amounts { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-soft); margin-bottom: 10px; }
+.loan-amounts b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.loan-outstanding-row { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.loan-outstanding-label { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; }
+.loan-outstanding-value { font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.loan-outstanding-value.receivable { color: var(--green); }
+.loan-outstanding-value.payable { color: var(--red); }
+.loan-progress-track { height: 8px; border-radius: 999px; background: var(--bg-sunken); overflow: hidden; margin-bottom: 10px; }
+.loan-progress-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .3s ease; }
+.loan-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; font-size: 11.5px; color: var(--ink-faint); }
+.loan-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.loan-actions .btn { padding: 8px 14px; font-size: 12.5px; }
+.settled-badge {
+  font-size: 11.5px; font-weight: 700; color: var(--green);
+  background: color-mix(in srgb, var(--green) 15%, transparent); padding: 5px 10px; border-radius: 8px;
+}
+
+.loan-payment-form {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-sunken); border-radius: var(--radius-sm); padding: 10px; margin-top: 10px;
+}
+.loan-payment-form input {
+  border: none; background: var(--bg-elevated); border-radius: 8px;
+  padding: 8px 10px; font-size: 13.5px;
+}
+.loan-payment-form .pay-amount { width: 100px; }
+
+.loan-payments-list { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+.loan-payment-row {
+  display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--ink-soft);
+  padding: 4px 0;
+}
+.loan-payment-row .amount { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.loan-payment-row .date { color: var(--ink-faint); flex: 1; }
+
 /* ============================================================
    Settings sheet
    ============================================================ */
