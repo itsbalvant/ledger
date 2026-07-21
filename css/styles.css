@@ -63,6 +63,88 @@
 }
 
 /* ============================================================
+   Theme palettes — "terracotta" (above) is the default/no-attribute
+   palette. Each of the following defines its own light + dark pair,
+   swapped in via [data-palette] on <html>, set from Settings.
+   ============================================================ */
+
+/* ---------- Ocean ---------- */
+:root[data-palette="ocean"] {
+  --bg: #eef3f5; --bg-elevated: #ffffff; --bg-sunken: #e2eaee;
+  --ink: #16232b; --ink-soft: #4d6270; --ink-faint: #8a9aa5; --border: #d7e2e7;
+  --accent: #2e6f8e; --accent-ink: #ffffff; --accent-soft: #dcebf1;
+}
+:root[data-palette="ocean"][data-theme="dark"] {
+  --bg: #0f1a20; --bg-elevated: #16242c; --bg-sunken: #0b141a;
+  --ink: #e8f1f5; --ink-soft: #a9c0cb; --ink-faint: #6f8891; --border: #223540;
+  --accent: #5fb8d9; --accent-ink: #0f1a20; --accent-soft: #1c3540;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="ocean"]:not([data-theme="light"]) {
+    --bg: #0f1a20; --bg-elevated: #16242c; --bg-sunken: #0b141a;
+    --ink: #e8f1f5; --ink-soft: #a9c0cb; --ink-faint: #6f8891; --border: #223540;
+    --accent: #5fb8d9; --accent-ink: #0f1a20; --accent-soft: #1c3540;
+  }
+}
+
+/* ---------- Forest ---------- */
+:root[data-palette="forest"] {
+  --bg: #f1f4ec; --bg-elevated: #ffffff; --bg-sunken: #e6ebdc;
+  --ink: #1c2417; --ink-soft: #4f5c40; --ink-faint: #838f74; --border: #dde4cd;
+  --accent: #3f7d52; --accent-ink: #ffffff; --accent-soft: #dcebe0;
+}
+:root[data-palette="forest"][data-theme="dark"] {
+  --bg: #131a11; --bg-elevated: #1b2417; --bg-sunken: #0f150d;
+  --ink: #e9f0e2; --ink-soft: #b0bfa2; --ink-faint: #74836a; --border: #29331f;
+  --accent: #6fbf82; --accent-ink: #131a11; --accent-soft: #1f3324;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="forest"]:not([data-theme="light"]) {
+    --bg: #131a11; --bg-elevated: #1b2417; --bg-sunken: #0f150d;
+    --ink: #e9f0e2; --ink-soft: #b0bfa2; --ink-faint: #74836a; --border: #29331f;
+    --accent: #6fbf82; --accent-ink: #131a11; --accent-soft: #1f3324;
+  }
+}
+
+/* ---------- Plum ---------- */
+:root[data-palette="plum"] {
+  --bg: #f6f1f7; --bg-elevated: #ffffff; --bg-sunken: #ece2ee;
+  --ink: #241b26; --ink-soft: #5b4c5e; --ink-faint: #8f7f92; --border: #e2d3e4;
+  --accent: #85499c; --accent-ink: #ffffff; --accent-soft: #ecdcf0;
+}
+:root[data-palette="plum"][data-theme="dark"] {
+  --bg: #1a1420; --bg-elevated: #241c2b; --bg-sunken: #150f19;
+  --ink: #f1e8f3; --ink-soft: #c3aec8; --ink-faint: #877090; --border: #332a3a;
+  --accent: #c586d9; --accent-ink: #1a1420; --accent-soft: #34243c;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="plum"]:not([data-theme="light"]) {
+    --bg: #1a1420; --bg-elevated: #241c2b; --bg-sunken: #150f19;
+    --ink: #f1e8f3; --ink-soft: #c3aec8; --ink-faint: #877090; --border: #332a3a;
+    --accent: #c586d9; --accent-ink: #1a1420; --accent-soft: #34243c;
+  }
+}
+
+/* ---------- Slate ---------- */
+:root[data-palette="slate"] {
+  --bg: #f2f2f4; --bg-elevated: #ffffff; --bg-sunken: #e6e6ea;
+  --ink: #1a1c20; --ink-soft: #52565e; --ink-faint: #888c93; --border: #dcdce1;
+  --accent: #45505f; --accent-ink: #ffffff; --accent-soft: #e1e5ea;
+}
+:root[data-palette="slate"][data-theme="dark"] {
+  --bg: #16171a; --bg-elevated: #1f2024; --bg-sunken: #101113;
+  --ink: #eceef0; --ink-soft: #b3b7bd; --ink-faint: #74787f; --border: #2b2d31;
+  --accent: #9fb0c4; --accent-ink: #16171a; --accent-soft: #2a333c;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-palette="slate"]:not([data-theme="light"]) {
+    --bg: #16171a; --bg-elevated: #1f2024; --bg-sunken: #101113;
+    --ink: #eceef0; --ink-soft: #b3b7bd; --ink-faint: #74787f; --border: #2b2d31;
+    --accent: #9fb0c4; --accent-ink: #16171a; --accent-soft: #2a333c;
+  }
+}
+
+/* ============================================================
    Reset
    ============================================================ */
 * { box-sizing: border-box; }
@@ -110,7 +192,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   to { transform: rotate(360deg); }
 }
 .anim-in {
-  animation: riseIn 0.45s var(--ease) both;
+  animation: riseIn 0.28s var(--ease) both;
   animation-delay: var(--stagger, 0ms);
 }
 @media (prefers-reduced-motion: reduce) {
@@ -337,7 +419,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   height: 100%;
   overflow: hidden;
 }
-.view.active { animation: viewFadeIn .3s var(--ease) both; }
+.view.active { animation: viewFadeIn .18s var(--ease) both; }
 @keyframes viewFadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -757,8 +839,23 @@ textarea.note-textarea:focus { outline: none; }
 .theme-toggle { display: flex; background: var(--bg-sunken); border-radius: 10px; padding: 3px; }
 .theme-toggle button {
   border: none; background: none; padding: 7px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 600; color: var(--ink-faint);
+  transition: background .15s var(--ease), color .15s var(--ease);
 }
 .theme-toggle button.active { background: var(--bg-elevated); color: var(--ink); box-shadow: var(--shadow); }
+
+.sheet-row-column { flex-direction: column; align-items: flex-start; gap: 10px; }
+.palette-picker { display: flex; gap: 10px; }
+.palette-swatch {
+  width: 34px; height: 34px; border-radius: 50%; padding: 0; flex-shrink: 0;
+  border: 2px solid transparent;
+  background: conic-gradient(var(--sw-a) 0deg 180deg, var(--sw-b) 180deg 360deg);
+  transition: transform .15s var(--ease-out-back), border-color .15s var(--ease);
+}
+.palette-swatch.selected { border-color: var(--ink); transform: scale(1.12); }
+.palette-swatch:active { transform: scale(0.9); }
+@media (hover: hover) {
+  .palette-swatch:not(.selected):hover { transform: scale(1.08); }
+}
 
 /* ============================================================
    Toast

@@ -38,7 +38,7 @@ export function initTasks({ root, uid, showToast }) {
     visible.forEach((t, i) => {
       const li = document.createElement("li");
       li.className = "task-item anim-in" + (t.done ? " done" : "");
-      li.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
+      li.style.setProperty("--stagger", Math.min(i, 8) * 15 + "ms");
       li.draggable = true;
       li.dataset.id = t.id;
 

@@ -36,9 +36,51 @@ function setTheme(t) {
   );
 }
 document.querySelectorAll(".theme-toggle button").forEach((b) => {
-  b.addEventListener("click", () => setTheme(b.dataset.theme));
+  b.addEventListener("click", () => { setTheme(b.dataset.theme); updateThemeColorMeta(); });
   b.classList.toggle("active", b.dataset.theme === (themeStored || "auto"));
 });
+
+/* ---------------- Palette ---------------- */
+const PALETTE_ACCENTS = {
+  terracotta: { light: "#b5502f", dark: "#e07a52" },
+  ocean: { light: "#2e6f8e", dark: "#5fb8d9" },
+  forest: { light: "#3f7d52", dark: "#6fbf82" },
+  plum: { light: "#85499c", dark: "#c586d9" },
+  slate: { light: "#45505f", dark: "#9fb0c4" },
+};
+const paletteStored = localStorage.getItem("palette") || "terracotta";
+if (paletteStored !== "terracotta") document.documentElement.setAttribute("data-palette", paletteStored);
+
+function setPalette(p) {
+  if (p === "terracotta") {
+    document.documentElement.removeAttribute("data-palette");
+    localStorage.removeItem("palette");
+  } else {
+    document.documentElement.setAttribute("data-palette", p);
+    localStorage.setItem("palette", p);
+  }
+  document.querySelectorAll(".palette-swatch").forEach((b) => b.classList.toggle("selected", b.dataset.palette === p));
+  updateThemeColorMeta();
+}
+document.querySelectorAll(".palette-swatch").forEach((b) => {
+  b.addEventListener("click", () => setPalette(b.dataset.palette));
+  b.classList.toggle("selected", b.dataset.palette === paletteStored);
+});
+
+function isDarkActive() {
+  const explicit = document.documentElement.getAttribute("data-theme");
+  if (explicit === "dark") return true;
+  if (explicit === "light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function updateThemeColorMeta() {
+  const palette = document.documentElement.getAttribute("data-palette") || "terracotta";
+  const accents = PALETTE_ACCENTS[palette] || PALETTE_ACCENTS.terracotta;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", isDarkActive() ? accents.dark : accents.light);
+}
+updateThemeColorMeta();
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeColorMeta);
 
 /* ---------------- Auth screen ---------------- */
 if (!firebaseConfigured) {

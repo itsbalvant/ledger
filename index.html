@@ -12,6 +12,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ledger">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://firestore.googleapis.com">
+<link rel="preconnect" href="https://identitytoolkit.googleapis.com">
+<link rel="modulepreload" href="js/main.js">
+<link rel="modulepreload" href="js/db.js">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -316,6 +321,16 @@
         <button data-theme="auto">Auto</button>
         <button data-theme="light">Light</button>
         <button data-theme="dark">Dark</button>
+      </div>
+    </div>
+    <div class="sheet-row sheet-row-column">
+      <span>Theme</span>
+      <div class="palette-picker" id="palette-picker">
+        <button class="palette-swatch" data-palette="terracotta" style="--sw-a:#b5502f;--sw-b:#f6f3ee;" aria-label="Terracotta"></button>
+        <button class="palette-swatch" data-palette="ocean" style="--sw-a:#2e6f8e;--sw-b:#eef3f5;" aria-label="Ocean"></button>
+        <button class="palette-swatch" data-palette="forest" style="--sw-a:#3f7d52;--sw-b:#f1f4ec;" aria-label="Forest"></button>
+        <button class="palette-swatch" data-palette="plum" style="--sw-a:#85499c;--sw-b:#f6f1f7;" aria-label="Plum"></button>
+        <button class="palette-swatch" data-palette="slate" style="--sw-a:#45505f;--sw-b:#f2f2f4;" aria-label="Slate"></button>
       </div>
     </div>
     <div class="sheet-row">

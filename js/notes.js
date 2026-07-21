@@ -26,6 +26,19 @@ export function initNotes({ root, uid, showToast }) {
   let saveTimer = null;
   const engine = createDrawingEngine(drawCanvas);
 
+  // Rasterizing a drawing's strokes to a thumbnail PNG is the most expensive
+  // thing this module does — cache by note id + updatedAt so a re-render
+  // triggered by any other note's edit doesn't redraw every sketch again.
+  const thumbCache = new Map();
+  function getThumbnail(n) {
+    const sig = n.updatedAt?.seconds ?? n.strokes.length;
+    const cached = thumbCache.get(n.id);
+    if (cached && cached.sig === sig) return cached.url;
+    const url = renderStrokesToDataUrl(n.strokes);
+    thumbCache.set(n.id, { sig, url });
+    return url;
+  }
+
   function buildToolbar() {
     colorSwatchesWrap.innerHTML = "";
     engine.COLORS.forEach((c, i) => {
@@ -156,6 +169,9 @@ export function initNotes({ root, uid, showToast }) {
     grid.innerHTML = "";
     emptyState.classList.toggle("hidden", notes.length > 0);
 
+    const liveIds = new Set(notes.map((n) => n.id));
+    for (const id of thumbCache.keys()) if (!liveIds.has(id)) thumbCache.delete(id);
+
     const newTextCard = makeNewCard("Text note", "✎", () => createNote("text"));
     const newDrawCard = makeNewCard("Sketch", "✳", () => createNote("drawing"));
     grid.appendChild(newTextCard);
@@ -164,7 +180,7 @@ export function initNotes({ root, uid, showToast }) {
     notes.forEach((n, i) => {
       const card = document.createElement("button");
       card.className = "note-card anim-in";
-      card.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
+      card.style.setProperty("--stagger", Math.min(i, 8) * 15 + "ms");
       card.style.textAlign = "left";
       card.style.border = "1px solid var(--border)";
       card.innerHTML = `
@@ -180,7 +196,7 @@ export function initNotes({ root, uid, showToast }) {
         const previewWrap = card.querySelector(".note-preview-canvas");
         if (n.strokes && n.strokes.length) {
           const img = document.createElement("img");
-          img.src = renderStrokesToDataUrl(n.strokes);
+          img.src = getThumbnail(n);
           previewWrap.appendChild(img);
         }
       }

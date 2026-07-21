@@ -124,7 +124,7 @@ export function initFinance({ root, uid, showToast }) {
     sorted.forEach((e, i) => {
       const li = document.createElement("li");
       li.className = "expense-row anim-in";
-      li.style.setProperty("--stagger", Math.min(i, 10) * 20 + "ms");
+      li.style.setProperty("--stagger", Math.min(i, 8) * 12 + "ms");
       li.innerHTML = `
         <span class="cat-dot" style="background:${CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other}"></span>
         <div class="info">
@@ -210,7 +210,7 @@ export function initFinance({ root, uid, showToast }) {
       items.forEach((inv, idx) => {
         const row = document.createElement("div");
         row.className = "investment-row anim-in";
-        row.style.setProperty("--stagger", Math.min(idx, 10) * 20 + "ms");
+        row.style.setProperty("--stagger", Math.min(idx, 8) * 12 + "ms");
         row.innerHTML = `
           <div class="info">
             <div class="type-label"></div>

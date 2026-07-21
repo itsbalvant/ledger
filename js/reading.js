@@ -31,7 +31,7 @@ export function initReading({ root, uid, showToast }) {
     visible.forEach((a, i) => {
       const card = document.createElement("div");
       card.className = "article-card anim-in" + (a.read ? " read" : "");
-      card.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
+      card.style.setProperty("--stagger", Math.min(i, 8) * 15 + "ms");
       const domain = domainOf(a.url);
       card.innerHTML = `
         <div class="article-top">
