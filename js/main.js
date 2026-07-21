@@ -3,6 +3,7 @@ import { onAuthChange, register, login, logout, resetPassword, friendlyAuthError
 import { initTasks } from "./tasks.js";
 import { initReading } from "./reading.js";
 import { initNotes } from "./notes.js";
+import { initFinance } from "./finance.js";
 
 const authScreen = document.getElementById("auth-screen");
 const appShell = document.getElementById("app-shell");
@@ -159,6 +160,7 @@ if (firebaseConfigured) {
       activeModules.push(initTasks({ root: document.getElementById("view-tasks"), uid: user.uid, showToast }));
       activeModules.push(initReading({ root: document.getElementById("view-reading"), uid: user.uid, showToast }));
       activeModules.push(initNotes({ root: document.getElementById("view-notes"), uid: user.uid, showToast }));
+      activeModules.push(initFinance({ root: document.getElementById("view-finance"), uid: user.uid, showToast }));
     } else {
       appShell.classList.add("hidden");
       authScreen.classList.remove("hidden");

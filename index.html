@@ -81,6 +81,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
       <span>Notes</span>
     </button>
+    <button class="nav-btn" data-view="finance">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+      <span>Finance</span>
+    </button>
 
     <div class="nav-spacer"></div>
     <div class="nav-bottom">
@@ -149,9 +153,9 @@
       </div>
 
       <div class="filter-row" id="article-filters">
-        <button class="chip active" data-filter="unread">Unread</button>
+        <button class="chip" data-filter="unread">Unread</button>
         <button class="chip" data-filter="read">Read</button>
-        <button class="chip" data-filter="all">All</button>
+        <button class="chip active" data-filter="all">All</button>
       </div>
 
       <div class="view-body">
@@ -179,6 +183,84 @@
           <div class="glyph">✎</div>
           <p>No notes yet. Start a text note or a sketch above.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- ---------- FINANCE ---------- -->
+    <section class="view" id="view-finance">
+      <div class="view-header">
+        <div>
+          <h2>Finance</h2>
+          <div class="sub">Spending &amp; net worth, at a glance</div>
+        </div>
+        <div class="header-actions"><span class="sync-dot synced" title="Synced"></span></div>
+      </div>
+
+      <div class="finance-tabs" id="finance-tabs">
+        <button class="chip active" data-tab="overview">Overview</button>
+        <button class="chip" data-tab="expenses">Expenses</button>
+        <button class="chip" data-tab="investments">Investments</button>
+      </div>
+
+      <div class="view-body">
+
+        <!-- Overview -->
+        <div class="finance-pane" id="finance-overview">
+          <div class="stat-cards" id="finance-stat-cards"></div>
+          <div class="panel">
+            <h3>This month by category</h3>
+            <div id="finance-category-bars"></div>
+            <div class="empty-state hidden" id="finance-category-empty" style="padding:24px 0 4px;">
+              <p>No expenses logged this month yet.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Expenses -->
+        <div class="finance-pane hidden" id="finance-expenses">
+          <div class="quick-add" style="margin:0 0 16px;flex-wrap:wrap;">
+            <input id="expense-amount" type="number" inputmode="decimal" step="0.01" placeholder="Amount" style="flex:1 1 110px;">
+            <select id="expense-category">
+              <option>Food</option>
+              <option>Transport</option>
+              <option>Shopping</option>
+              <option>Bills</option>
+              <option>Health</option>
+              <option>Entertainment</option>
+              <option>Other</option>
+            </select>
+            <input id="expense-date" type="date">
+            <input id="expense-note" type="text" placeholder="Note (optional)" style="flex:1 1 140px;">
+            <button id="expense-add-btn" class="btn btn-primary" style="width:auto;padding:11px 18px;">Add</button>
+          </div>
+          <ul class="expense-list" id="expense-list"></ul>
+          <div class="empty-state hidden" id="expense-empty">
+            <div class="glyph">₹</div>
+            <p>No expenses logged yet. Add your first one above.</p>
+          </div>
+        </div>
+
+        <!-- Investments -->
+        <div class="finance-pane hidden" id="finance-investments">
+          <div class="quick-add" style="margin:0 0 16px;flex-wrap:wrap;">
+            <select id="investment-type">
+              <option>FD</option>
+              <option>Bonds</option>
+              <option>Stocks</option>
+              <option>Savings</option>
+              <option>Other</option>
+            </select>
+            <input id="investment-name" type="text" placeholder="Name (e.g. HDFC FD)" style="flex:1 1 160px;">
+            <input id="investment-amount" type="number" inputmode="decimal" step="0.01" placeholder="Current value" style="flex:1 1 130px;">
+            <button id="investment-add-btn" class="btn btn-primary" style="width:auto;padding:11px 18px;">Add</button>
+          </div>
+          <div id="investment-groups"></div>
+          <div class="empty-state hidden" id="investment-empty">
+            <div class="glyph">◈</div>
+            <p>No holdings yet. Add an FD, bond, stock, or savings balance above.</p>
+          </div>
+        </div>
+
       </div>
     </section>
   </div>

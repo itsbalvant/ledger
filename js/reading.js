@@ -10,7 +10,7 @@ export function initReading({ root, uid, showToast }) {
   const emptyState = root.querySelector("#article-empty");
 
   let articles = [];
-  let filter = "unread"; // unread | read | all
+  let filter = "all"; // unread | read | all
 
   function domainOf(url) {
     try {
@@ -39,14 +39,16 @@ export function initReading({ root, uid, showToast }) {
             <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         </div>
-        <h3></h3>
+        <a class="article-link" target="_blank" rel="noopener noreferrer"><h3></h3></a>
         <div class="article-domain"></div>
         <div class="article-tags"></div>
         <div class="article-actions">
           <button class="btn btn-ghost read-toggle">${a.read ? "Mark unread" : "Mark read"}</button>
         </div>
       `;
-      card.querySelector("h3").textContent = a.title || a.url;
+      const link = card.querySelector(".article-link");
+      link.href = a.url;
+      link.querySelector("h3").textContent = a.title || a.url;
       card.querySelector(".article-domain").textContent = domain;
       const tagsWrap = card.querySelector(".article-tags");
       (a.tags || []).forEach((t) => {
@@ -55,14 +57,13 @@ export function initReading({ root, uid, showToast }) {
         el.textContent = t;
         tagsWrap.appendChild(el);
       });
-      card.querySelector("h3").addEventListener("click", () => window.open(a.url, "_blank", "noopener"));
-      card.querySelector("h3").style.cursor = "pointer";
       card.querySelector(".read-toggle").addEventListener("click", () =>
         updateItem(uid, "articles", a.id, { read: !a.read }).catch((e) => showToast(e.message))
       );
-      card.querySelector(".icon-x").addEventListener("click", () =>
-        deleteItem(uid, "articles", a.id).catch((e) => showToast(e.message))
-      );
+      card.querySelector(".icon-x").addEventListener("click", () => {
+        if (!confirm("Delete this article from your reading list?")) return;
+        deleteItem(uid, "articles", a.id).catch((e) => showToast(e.message));
+      });
       grid.appendChild(card);
     }
   }

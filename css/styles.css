@@ -429,6 +429,7 @@ ul { margin: 0; padding: 0; list-style: none; }
   position: relative;
 }
 .article-card.read { opacity: .55; }
+.article-link { text-decoration: none; color: inherit; display: block; }
 .article-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .article-fav {
   width: 22px; height: 22px; border-radius: 6px; flex-shrink: 0; background: var(--bg-sunken);
@@ -509,8 +510,14 @@ textarea.note-textarea {
 }
 textarea.note-textarea:focus { outline: none; }
 
-.canvas-wrap { position: absolute; inset: 0; touch-action: none; }
-#draw-canvas { width: 100%; height: 100%; display: block; background: var(--bg-elevated); touch-action: none; }
+.canvas-wrap {
+  position: absolute; inset: 0; touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
+#draw-canvas {
+  width: 100%; height: 100%; display: block; background: var(--bg-elevated); touch-action: none;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+}
 
 .draw-toolbar {
   position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
@@ -537,6 +544,74 @@ textarea.note-textarea:focus { outline: none; }
 }
 .tool-btn.selected { background: var(--ink); color: var(--bg); }
 .tool-btn svg { width: 18px; height: 18px; }
+
+/* ============================================================
+   Finance
+   ============================================================ */
+.finance-tabs { display: flex; gap: 8px; margin: 0 36px 20px; flex-shrink: 0; }
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+}
+.stat-card .label { font-size: 12px; font-weight: 600; color: var(--ink-faint); margin-bottom: 6px; }
+.stat-card .value { font-family: var(--font-serif); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+.stat-card .value.positive { color: var(--green); }
+.stat-card .value.negative { color: var(--red); }
+.stat-card .sub { font-size: 11.5px; color: var(--ink-faint); margin-top: 4px; }
+
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px 22px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.panel h3 { font-size: 14.5px; font-weight: 700; margin-bottom: 14px; }
+
+.category-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.category-bar-row:last-child { margin-bottom: 0; }
+.category-bar-label { width: 92px; flex-shrink: 0; font-size: 12.5px; font-weight: 600; color: var(--ink-soft); }
+.category-bar-track { flex: 1; height: 10px; border-radius: 999px; background: var(--bg-sunken); overflow: hidden; }
+.category-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .3s ease; }
+.category-bar-amount { width: 76px; flex-shrink: 0; text-align: right; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.expense-list, .investment-list { display: flex; flex-direction: column; gap: 8px; }
+.expense-row, .investment-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 13px 16px;
+}
+.expense-row .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.expense-row .info, .investment-row .info { flex: 1; min-width: 0; }
+.expense-row .cat, .investment-row .type-label { font-size: 14px; font-weight: 700; }
+.expense-row .note, .investment-row .note { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+.expense-row .date-chip {
+  font-size: 11px; font-weight: 600; color: var(--ink-faint);
+  background: var(--bg-sunken); padding: 4px 9px; border-radius: 8px; flex-shrink: 0;
+}
+.expense-row .amount, .investment-row .amount {
+  font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0;
+}
+
+.investment-group { margin-bottom: 18px; }
+.investment-group:last-child { margin-bottom: 0; }
+.investment-group-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 8px; padding: 0 2px;
+}
+.investment-group-header .type-name { font-size: 13px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+.investment-group-header .type-total { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
 /* ============================================================
    Settings sheet
@@ -597,6 +672,7 @@ textarea.note-textarea:focus { outline: none; }
   .view-body { padding: 0 18px 30px; }
   .quick-add { margin: 0 18px 16px; flex-wrap: wrap; }
   .filter-row { margin: 0 18px 14px; }
+  .finance-tabs { margin: 0 18px 16px; }
   .notes-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
 

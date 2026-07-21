@@ -105,8 +105,15 @@ export function createDrawingEngine(canvasEl) {
 
   let activePointerId = null;
 
+  // Palm rejection: only Apple Pencil ('pen') or a mouse draws. Touch input
+  // (fingers, a resting palm) is always ignored for drawing — we still
+  // preventDefault on it so it can't trigger iOS's text-selection/callout
+  // gesture on top of the canvas.
   function onPointerDown(e) {
-    if (e.pointerType === "touch" && e.isPrimary === false) return;
+    if (e.pointerType === "touch") {
+      e.preventDefault();
+      return;
+    }
     activePointerId = e.pointerId;
     canvasEl.setPointerCapture(e.pointerId);
     currentStroke = {
@@ -120,6 +127,10 @@ export function createDrawingEngine(canvasEl) {
   }
 
   function onPointerMove(e) {
+    if (e.pointerType === "touch") {
+      e.preventDefault();
+      return;
+    }
     if (!currentStroke || e.pointerId !== activePointerId) return;
     // coalesced events give smoother lines with Pencil
     const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
@@ -131,6 +142,10 @@ export function createDrawingEngine(canvasEl) {
   }
 
   function endStroke(e) {
+    if (e && e.pointerType === "touch") {
+      e.preventDefault();
+      return;
+    }
     if (!currentStroke || (e && e.pointerId !== activePointerId)) return;
     if (currentStroke.points.length) {
       strokes.push(currentStroke);
