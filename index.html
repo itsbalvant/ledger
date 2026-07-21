@@ -229,6 +229,25 @@
         <!-- Overview -->
         <div class="finance-pane" id="finance-overview">
           <div class="stat-cards" id="finance-stat-cards"></div>
+
+          <div class="panel">
+            <h3>Spending, last 12 months</h3>
+            <div class="trend-bars" id="spending-trend"></div>
+            <div class="empty-state hidden" id="spending-trend-empty" style="padding:24px 0 4px;">
+              <p>No expenses logged yet — this fills in as you add them.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>Net worth over time</h3>
+            <div class="trend-line-wrap" id="networth-trend">
+              <svg viewBox="0 0 600 160" preserveAspectRatio="none" id="networth-svg"></svg>
+            </div>
+            <div class="empty-state hidden" id="networth-trend-empty" style="padding:24px 0 4px;">
+              <p>Net worth history starts today and builds up the more you use the app — nothing to plot retroactively yet.</p>
+            </div>
+          </div>
+
           <div class="panel">
             <h3>This month by category</h3>
             <div id="finance-category-bars"></div>
@@ -349,6 +368,7 @@
 </div>
 
 <div id="toast"></div>
+<div id="chart-tooltip" class="chart-tooltip hidden" role="status" aria-live="polite"></div>
 
 <script type="module" src="js/main.js"></script>
 </body>

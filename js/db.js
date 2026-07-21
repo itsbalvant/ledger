@@ -9,6 +9,7 @@ import {
   doc,
   addDoc,
   updateDoc,
+  setDoc,
   deleteDoc,
   onSnapshot,
   query,
@@ -79,6 +80,12 @@ export async function updateItem(uid, name, id, data) {
 
 export async function deleteItem(uid, name, id) {
   return deleteDoc(doc(getDb(), "users", uid, name, id));
+}
+
+// Upsert by a caller-chosen id (e.g. a date string) instead of an
+// auto-generated one — used for daily snapshot-style records.
+export async function setItem(uid, name, id, data) {
+  return setDoc(doc(getDb(), "users", uid, name, id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
 }
 
 const EXPORT_COLLECTIONS = ["tasks", "articles", "expenses", "investments"];

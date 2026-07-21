@@ -1,4 +1,5 @@
 import { watchCollection, addItem, updateItem, deleteItem } from "./db.js";
+import { localDateStr } from "./date-utils.js";
 
 const PRIORITY_ORDER = { high: 0, med: 1, low: 2 };
 
@@ -16,7 +17,7 @@ export function initTasks({ root, uid, showToast }) {
   let dragId = null;
 
   function todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    return localDateStr();
   }
 
   function render() {

@@ -1,4 +1,5 @@
-import { watchCollection, addItem, updateItem, deleteItem } from "./db.js";
+import { watchCollection, addItem, updateItem, deleteItem, setItem } from "./db.js";
+import { localDateStr, localMonthStr } from "./date-utils.js";
 
 // Assumes INR — change this one constant if you'd rather see a different symbol.
 const CURRENCY = "₹";
@@ -35,10 +36,18 @@ function periodKey(mode, dateStr) {
 }
 function shiftAnchor(mode, anchor, dir) {
   const d = new Date(anchor + "T00:00:00");
-  if (mode === "day") d.setDate(d.getDate() + dir);
-  else if (mode === "month") d.setMonth(d.getMonth() + dir);
-  else if (mode === "year") d.setFullYear(d.getFullYear() + dir);
-  return d.toISOString().slice(0, 10);
+  if (mode === "day") {
+    d.setDate(d.getDate() + dir);
+  } else if (mode === "month") {
+    // Pin to day 1 before shifting — otherwise e.g. Mar 31 minus one month
+    // overflows into March 2/3 instead of landing in February.
+    d.setDate(1);
+    d.setMonth(d.getMonth() + dir);
+  } else if (mode === "year") {
+    d.setDate(1);
+    d.setFullYear(d.getFullYear() + dir);
+  }
+  return localDateStr(d);
 }
 function periodLabel(mode, anchor) {
   const d = new Date(anchor + "T00:00:00");
@@ -59,6 +68,11 @@ export function initFinance({ root, uid, showToast }) {
   const statCards = root.querySelector("#finance-stat-cards");
   const categoryBars = root.querySelector("#finance-category-bars");
   const categoryEmpty = root.querySelector("#finance-category-empty");
+  const chartTooltip = document.getElementById("chart-tooltip");
+  const spendingTrendEl = root.querySelector("#spending-trend");
+  const spendingTrendEmpty = root.querySelector("#spending-trend-empty");
+  const networthSvg = root.querySelector("#networth-svg");
+  const networthTrendEmpty = root.querySelector("#networth-trend-empty");
 
   const expAmount = root.querySelector("#expense-amount");
   const expCategory = root.querySelector("#expense-category");
@@ -83,12 +97,144 @@ export function initFinance({ root, uid, showToast }) {
 
   let expenses = [];
   let investments = [];
+  let netWorthHistory = [];
   let editingExpenseId = null;
   let editingInvestmentId = null;
   let periodMode = "month"; // day | month | year | all
-  let periodAnchor = new Date().toISOString().slice(0, 10);
+  let periodAnchor = localDateStr();
 
-  expDate.value = new Date().toISOString().slice(0, 10);
+  /* ---------------- Shared chart tooltip ---------------- */
+  function showChartTooltip(el, valueText, labelText) {
+    const rect = el.getBoundingClientRect();
+    chartTooltip.innerHTML = "";
+    const v = document.createElement("div");
+    v.className = "tip-value";
+    v.textContent = valueText;
+    const l = document.createElement("div");
+    l.className = "tip-label";
+    l.textContent = labelText;
+    chartTooltip.appendChild(v);
+    chartTooltip.appendChild(l);
+    chartTooltip.style.left = rect.left + rect.width / 2 + "px";
+    chartTooltip.style.top = rect.top + "px";
+    chartTooltip.classList.remove("hidden");
+  }
+  function hideChartTooltip() {
+    chartTooltip.classList.add("hidden");
+  }
+
+  /* ---------------- Spending trend (bar chart, last 12 months) ---------------- */
+  function lastNMonths(n) {
+    const out = [];
+    const first = new Date();
+    first.setDate(1);
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date(first.getFullYear(), first.getMonth() - i, 1);
+      out.push(localMonthStr(d));
+    }
+    return out;
+  }
+
+  function renderSpendingTrend() {
+    const months = lastNMonths(12);
+    const totals = months.map((m) =>
+      expenses.filter((e) => (e.date || "").startsWith(m)).reduce((sum, e) => sum + (Number(e.amount) || 0), 0)
+    );
+    const hasAny = totals.some((t) => t > 0);
+    spendingTrendEmpty.classList.toggle("hidden", hasAny);
+    spendingTrendEl.classList.toggle("hidden", !hasAny);
+    if (!hasAny) return;
+
+    const max = Math.max(...totals);
+    const currentMonthKey = localMonthStr();
+    spendingTrendEl.innerHTML = "";
+    months.forEach((m, i) => {
+      const total = totals[i];
+      const pct = max ? (total / max) * 100 : 0;
+      const isCurrent = m === currentMonthKey;
+      const col = document.createElement("div");
+      col.className = "trend-bar-col" + (isCurrent ? " is-current" : "");
+      col.tabIndex = 0;
+      const shortLabel = new Date(m + "-01T00:00:00").toLocaleDateString(undefined, { month: "short" });
+      col.innerHTML = `
+        ${isCurrent ? `<div class="trend-bar-tip-value"></div>` : ""}
+        <div class="trend-bar" style="height:${pct}%"></div>
+        <div class="trend-bar-label"></div>
+      `;
+      if (isCurrent) col.querySelector(".trend-bar-tip-value").textContent = money(total);
+      col.querySelector(".trend-bar-label").textContent = shortLabel;
+
+      const fullLabel = new Date(m + "-01T00:00:00").toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      col.addEventListener("pointerenter", () => showChartTooltip(col, money(total), fullLabel));
+      col.addEventListener("pointerleave", hideChartTooltip);
+      col.addEventListener("focus", () => showChartTooltip(col, money(total), fullLabel));
+      col.addEventListener("blur", hideChartTooltip);
+      spendingTrendEl.appendChild(col);
+    });
+  }
+
+  /* ---------------- Net worth trend (line chart) ---------------- */
+  function renderNetWorthTrend() {
+    const points = netWorthHistory;
+    networthTrendEmpty.classList.toggle("hidden", points.length > 0);
+    networthSvg.classList.toggle("hidden", points.length === 0);
+    networthSvg.innerHTML = "";
+    if (!points.length) return;
+
+    const W = 600, H = 160, PAD = 24;
+    const values = points.map((p) => Number(p.total) || 0);
+    const min = Math.min(...values, 0);
+    const max = Math.max(...values, 1);
+    const range = max - min || 1;
+    const xFor = (i) => (points.length === 1 ? W / 2 : PAD + (i / (points.length - 1)) * (W - PAD * 2));
+    const yFor = (v) => H - PAD - ((v - min) / range) * (H - PAD * 2);
+
+    const NS = "http://www.w3.org/2000/svg";
+    const baseline = document.createElementNS(NS, "line");
+    baseline.setAttribute("class", "trend-axis");
+    baseline.setAttribute("x1", "0");
+    baseline.setAttribute("x2", String(W));
+    baseline.setAttribute("y1", String(H - PAD));
+    baseline.setAttribute("y2", String(H - PAD));
+    networthSvg.appendChild(baseline);
+
+    if (points.length > 1) {
+      let d = "";
+      points.forEach((_, i) => {
+        d += (i === 0 ? "M" : "L") + xFor(i) + " " + yFor(values[i]) + " ";
+      });
+      const area = document.createElementNS(NS, "path");
+      area.setAttribute("class", "trend-area");
+      area.setAttribute("d", d.trim() + ` L${xFor(points.length - 1)} ${H - PAD} L${xFor(0)} ${H - PAD} Z`);
+      networthSvg.appendChild(area);
+
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute("class", "trend-line-path");
+      path.setAttribute("d", d.trim());
+      networthSvg.appendChild(path);
+    }
+
+    points.forEach((p, i) => {
+      const dot = document.createElementNS(NS, "circle");
+      dot.setAttribute("class", "trend-dot");
+      dot.setAttribute("cx", String(xFor(i)));
+      dot.setAttribute("cy", String(yFor(values[i])));
+      dot.setAttribute("r", "5");
+      dot.setAttribute("tabindex", "0");
+      const dateLabel = new Date(p.id + "T00:00:00").toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+      dot.addEventListener("pointerenter", () => showChartTooltip(dot, money(values[i]), dateLabel));
+      dot.addEventListener("pointerleave", hideChartTooltip);
+      dot.addEventListener("focus", () => showChartTooltip(dot, money(values[i]), dateLabel));
+      dot.addEventListener("blur", hideChartTooltip);
+      networthSvg.appendChild(dot);
+    });
+  }
+
+  expDate.value = localDateStr();
 
   /* ---------------- Tab switching ---------------- */
   tabsRow.querySelectorAll(".chip").forEach((chip) => {
@@ -103,7 +249,7 @@ export function initFinance({ root, uid, showToast }) {
     const netWorth = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
 
     const now = new Date();
-    const monthKey = now.toISOString().slice(0, 7); // YYYY-MM
+    const monthKey = localMonthStr(now);
     const thisMonthExpenses = expenses.filter((e) => (e.date || "").startsWith(monthKey));
     const monthTotal = thisMonthExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
@@ -283,7 +429,7 @@ export function initFinance({ root, uid, showToast }) {
       await addItem(uid, "expenses", {
         amount,
         category: expCategory.value,
-        date: expDate.value || new Date().toISOString().slice(0, 10),
+        date: expDate.value || localDateStr(),
         note: expNote.value.trim(),
       });
       expAmount.value = "";
@@ -433,18 +579,34 @@ export function initFinance({ root, uid, showToast }) {
     expenses = items;
     renderOverview();
     renderExpenses();
+    renderSpendingTrend();
   });
   const unsubInvestments = watchCollection(uid, "investments", "createdAt", (items, err) => {
     if (err) { showToast("Sync error: " + err.message); return; }
     investments = items;
     renderOverview();
     renderInvestments();
+
+    // Net worth has no history before today — this starts a daily snapshot
+    // log going forward so the trend chart has something to plot over time.
+    if (investments.length > 0) {
+      const netWorth = investments.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+      const today = localDateStr();
+      setItem(uid, "netWorthHistory", today, { total: netWorth, date: today }).catch(() => {});
+    }
   });
+  const unsubNetWorthHistory = watchCollection(uid, "netWorthHistory", "date", (items, err) => {
+    if (err) { showToast("Sync error: " + err.message); return; }
+    netWorthHistory = items;
+    renderNetWorthTrend();
+  }, "asc");
 
   return {
     destroy: () => {
       unsubExpenses();
       unsubInvestments();
+      unsubNetWorthHistory();
+      hideChartTooltip();
     },
   };
 }

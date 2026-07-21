@@ -683,6 +683,49 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .category-bar-fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width .3s ease; }
 .category-bar-amount { width: 76px; flex-shrink: 0; text-align: right; font-size: 12.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* ---------- Trend charts (Overview) ---------- */
+.trend-bars { display: flex; align-items: flex-end; gap: 5px; height: 130px; padding-top: 22px; }
+.trend-bar-col {
+  flex: 1; min-width: 0; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  position: relative; cursor: pointer;
+}
+.trend-bar {
+  width: 100%; max-width: 22px; min-height: 3px;
+  border-radius: 4px 4px 0 0; background: var(--accent);
+  transition: opacity .15s ease;
+}
+.trend-bar-col:hover .trend-bar, .trend-bar-col:focus-visible .trend-bar { opacity: .72; }
+.trend-bar-col.is-current .trend-bar { background: color-mix(in srgb, var(--accent) 80%, black); }
+.trend-bar-label { font-size: 10px; color: var(--ink-faint); margin-top: 6px; font-weight: 600; white-space: nowrap; }
+.trend-bar-tip-value {
+  position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+  font-size: 10.5px; font-weight: 700; color: var(--ink-soft); white-space: nowrap;
+}
+
+.trend-line-wrap { width: 100%; height: 150px; }
+.trend-line-wrap svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.trend-axis { stroke: var(--border); stroke-width: 1; }
+.trend-line-path { stroke: var(--accent); stroke-width: 2; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.trend-area { fill: var(--accent); opacity: .08; }
+.trend-dot {
+  fill: var(--accent); stroke: var(--bg-elevated); stroke-width: 2;
+  cursor: pointer; transition: r .1s ease;
+}
+.trend-dot:hover, .trend-dot:focus-visible { r: 6.5; outline: none; }
+.trend-hit { fill: transparent; cursor: pointer; }
+
+.chart-tooltip {
+  position: fixed; pointer-events: none; z-index: 60;
+  background: var(--ink); color: var(--bg);
+  padding: 8px 12px; border-radius: 10px; font-size: 12.5px;
+  box-shadow: var(--shadow-lift); transform: translate(-50%, -115%);
+  transition: opacity .1s ease;
+}
+.chart-tooltip.hidden { display: none; }
+.chart-tooltip .tip-value { font-weight: 700; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.chart-tooltip .tip-label { color: color-mix(in srgb, var(--bg) 65%, transparent); font-size: 11px; margin-top: 1px; white-space: nowrap; }
+
 .expense-list, .investment-list { display: flex; flex-direction: column; gap: 8px; }
 .expense-row, .investment-row {
   display: flex; align-items: center; gap: 12px;
