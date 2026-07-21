@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Ledger — Tasks, Reading &amp; Notes</title>
+<meta name="description" content="A fast, private space for tasks, reading list, and handwritten notes — built for iPad and Apple Pencil.">
+<meta name="theme-color" content="#b5502f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Ledger">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<!-- ================= AUTH SCREEN ================= -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo-mark">L</div>
+      <div>
+        <h1>Ledger</h1>
+        <p>Tasks · Reading · Notes</p>
+      </div>
+    </div>
+
+    <div id="config-warning" class="auth-error hidden">
+      Firebase isn't configured yet. Open <code>js/firebase-config.js</code> and paste in your
+      Firebase project keys (see README.md) — until then, login/register won't work.
+    </div>
+
+    <h2 id="auth-title" style="font-size:16px;font-weight:700;margin-bottom:16px;">Welcome back</h2>
+    <div id="auth-error" class="auth-error"></div>
+
+    <form id="auth-form">
+      <div class="field hidden" id="name-field">
+        <label for="name-input">Name</label>
+        <input id="name-input" type="text" autocomplete="name" placeholder="Your name">
+      </div>
+      <div class="field">
+        <label for="email-input">Email</label>
+        <input id="email-input" type="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="password-input">Password</label>
+        <input id="password-input" type="password" autocomplete="current-password" required placeholder="••••••••" minlength="6">
+      </div>
+      <button type="submit" id="auth-submit" class="btn btn-primary">Log in</button>
+    </form>
+
+    <div style="text-align:center;margin-top:12px;">
+      <button id="forgot-btn" class="btn-text">Forgot password?</button>
+    </div>
+
+    <div class="auth-switch">
+      <span id="auth-switch-label">New here?</span>
+      <button id="auth-switch-btn" class="btn-text">Create one</button>
+    </div>
+
+    <p class="auth-loading-note">Your data is private to your account and synced securely — nothing is stored in this page's code.</p>
+  </div>
+</div>
+
+<!-- ================= APP SHELL ================= -->
+<div id="app-shell" class="hidden">
+  <nav class="nav-rail">
+    <div class="logo-mark">L</div>
+
+    <button class="nav-btn active" data-view="tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h9"/></svg>
+      <span>Tasks</span>
+    </button>
+    <button class="nav-btn" data-view="reading">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5S4 3 8 3s6 1.5 6 1.5v15S12 18 8 18s-6 1.5-6 1.5v-15z"/><path d="M22 4.5S20 3 16 3s-6 1.5-6 1.5v15S10 18 14 18s6 1.5 6 1.5v-15z"/></svg>
+      <span>Reading</span>
+    </button>
+    <button class="nav-btn" data-view="notes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Notes</span>
+    </button>
+
+    <div class="nav-spacer"></div>
+    <div class="nav-bottom">
+      <button class="btn-icon" id="settings-btn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+      <button class="avatar-btn" id="avatar-btn" aria-label="Account">
+        <span id="avatar-initial">?</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="view-area">
+
+    <!-- ---------- TASKS ---------- -->
+    <section class="view active" id="view-tasks">
+      <div class="view-header">
+        <div>
+          <h2>Tasks</h2>
+          <div class="sub">What needs doing today</div>
+        </div>
+        <div class="header-actions"><span class="sync-dot synced" title="Synced"></span></div>
+      </div>
+
+      <div class="quick-add">
+        <input id="task-input" type="text" placeholder="Add a task and press Enter…">
+        <select id="task-priority">
+          <option value="high">High</option>
+          <option value="med" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <input id="task-due" type="date">
+        <button id="task-add-btn" class="btn btn-primary" style="width:auto;padding:11px 18px;">Add</button>
+      </div>
+
+      <div class="filter-row" id="task-filters">
+        <button class="chip active" data-filter="active">Active</button>
+        <button class="chip" data-filter="done">Done</button>
+        <button class="chip" data-filter="all">All</button>
+      </div>
+
+      <div class="view-body">
+        <ul class="task-list" id="task-list"></ul>
+        <div class="empty-state hidden" id="task-empty">
+          <div class="glyph">✓</div>
+          <p>Nothing here yet. Add your first task above.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- READING ---------- -->
+    <section class="view" id="view-reading">
+      <div class="view-header">
+        <div>
+          <h2>Reading list</h2>
+          <div class="sub">Articles worth coming back to</div>
+        </div>
+        <div class="header-actions"><span class="sync-dot synced" title="Synced"></span></div>
+      </div>
+
+      <div class="quick-add" style="flex-wrap:wrap;">
+        <input id="article-url" type="url" placeholder="Paste an article URL…" style="flex:1 1 220px;">
+        <input id="article-title" type="text" placeholder="Title (optional)" style="flex:1 1 160px;">
+        <input id="article-tags" type="text" placeholder="tags, comma, separated" style="flex:1 1 160px;">
+        <button id="article-add-btn" class="btn btn-primary" style="width:auto;padding:11px 18px;">Save</button>
+      </div>
+
+      <div class="filter-row" id="article-filters">
+        <button class="chip active" data-filter="unread">Unread</button>
+        <button class="chip" data-filter="read">Read</button>
+        <button class="chip" data-filter="all">All</button>
+      </div>
+
+      <div class="view-body">
+        <div class="article-grid" id="article-grid"></div>
+        <div class="empty-state hidden" id="article-empty">
+          <div class="glyph">📖</div>
+          <p>No articles saved yet. Paste a link above to start your reading list.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- NOTES ---------- -->
+    <section class="view" id="view-notes">
+      <div class="view-header">
+        <div>
+          <h2>Notes</h2>
+          <div class="sub">Type it, or write it with Pencil</div>
+        </div>
+        <div class="header-actions"><span class="sync-dot synced" title="Synced"></span></div>
+      </div>
+
+      <div class="view-body" style="padding-top:4px;">
+        <div class="notes-grid" id="notes-grid"></div>
+        <div class="empty-state hidden" id="notes-empty">
+          <div class="glyph">✎</div>
+          <p>No notes yet. Start a text note or a sketch above.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ================= NOTE EDITOR (overlay) ================= -->
+<div id="note-editor" class="hidden">
+  <div class="note-editor-bar">
+    <button class="btn-icon" id="note-close-btn" aria-label="Close">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12.5 5L7.5 10l5 5"/></svg>
+    </button>
+    <input class="note-title" type="text" placeholder="Untitled">
+    <button class="btn-icon btn-danger" id="note-delete-btn" aria-label="Delete note">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5.5h10M8 5.5v-1a1 1 0 011-1h2a1 1 0 011 1v1M6.5 5.5l.6 9a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-9"/></svg>
+    </button>
+  </div>
+  <div class="note-editor-body">
+    <textarea class="note-textarea" placeholder="Start writing…"></textarea>
+    <div class="canvas-wrap hidden">
+      <canvas id="draw-canvas"></canvas>
+      <div class="draw-toolbar">
+        <div class="color-swatches" style="display:flex;gap:6px;"></div>
+        <div class="divider"></div>
+        <div class="width-btns" style="display:flex;gap:6px;"></div>
+        <div class="divider"></div>
+        <button class="tool-btn selected" id="draw-pen" aria-label="Pen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </button>
+        <button class="tool-btn" id="draw-eraser" aria-label="Eraser">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8l-6-6a2 2 0 010-2.8L13.2 2 22 10.8 13.5 19.3"/></svg>
+        </button>
+        <div class="divider"></div>
+        <button class="tool-btn" id="draw-undo" aria-label="Undo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a5 5 0 015 5v1"/><path d="M3 10l5-5M3 10l5 5"/></svg>
+        </button>
+        <button class="tool-btn" id="draw-clear" aria-label="Clear all">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H8a1 1 0 01-1-1V6"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= SETTINGS SHEET ================= -->
+<div id="settings-backdrop" class="sheet-backdrop hidden">
+  <div class="sheet">
+    <h3>Account</h3>
+    <div class="user-email" id="user-email">—</div>
+
+    <div class="sheet-row">
+      <span>Appearance</span>
+      <div class="theme-toggle">
+        <button data-theme="auto">Auto</button>
+        <button data-theme="light">Light</button>
+        <button data-theme="dark">Dark</button>
+      </div>
+    </div>
+    <div class="sheet-row">
+      <span>Sign out of this device</span>
+      <button class="btn btn-ghost" id="logout-btn">Log out</button>
+    </div>
+
+    <div style="margin-top:18px;">
+      <button class="btn btn-ghost" id="close-settings-btn" style="width:100%;">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

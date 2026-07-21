@@ -1,0 +1,15 @@
+// Paste this into the Firebase console:
+// Firestore Database -> Rules -> replace contents -> Publish
+//
+// This restricts every document to the signed-in user who owns it — nobody
+// else can read or write your tasks, articles, or notes, even though the
+// Firebase config in this repo is public.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{collection}/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
