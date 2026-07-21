@@ -8,27 +8,23 @@ accounts and syncing your data across devices.
 
 ## Firebase status
 
-This repo is already wired up to a real Firebase project (`notes-app-32682`):
+This repo is wired up to a real Firebase project (`notes-app-32682`), fully
+configured and locked down:
 - ✅ Web app registered, config filled into `js/firebase-config.js`
+- ✅ Email/Password sign-in enabled
 - ✅ Firestore database created (`nam5`)
-- ✅ Security rules deployed (`firestore.rules` — each account can only ever
-  read/write its own data; verified with a live permission-denied test)
+- ✅ **No billing account linked** — confirmed via the Cloud Billing API
+  (`billingEnabled: false`). You're on the free Spark plan; nothing can be
+  charged.
+- ✅ Security rules deployed and locked to a **single owner account**
+  (`firestore.rules`) — even if a stranger finds this site's URL and
+  registers their own account, every read/write they attempt gets
+  `PERMISSION_DENIED`. Only the one owner uid can ever touch data. Verified
+  live with an unauthenticated request (`403 PERMISSION_DENIED`).
 
-**One manual step is left — Email/Password sign-in.** Google's newer Identity
-Platform API requires a Blaze (pay-as-you-go) billing link to turn this on
-programmatically, even though the feature itself is free to use — and that's
-a payment-method step only you should do:
-
-1. Open the [Authentication page](https://console.firebase.google.com/project/notes-app-32682/authentication) for this project.
-2. Click **Get started**.
-3. Under **Sign-in method**, enable **Email/Password**.
-4. If it prompts you to upgrade to the Blaze plan first: that's normal, it's
-   still $0 for this app's usage level (Spark's free quotas carry over, you're
-   simply billed only if you ever exceed them) — no charge happens just from
-   linking a card.
-
-Once that's on, registering/logging in on the site will work immediately —
-no other setup needed.
+If you ever want to trust a second device/person with your own data, add
+their uid to the allow-list in `firestore.rules` and redeploy (see below) —
+don't just widen the rule back to "any signed-in user."
 
 ## Redeploying security rules later
 

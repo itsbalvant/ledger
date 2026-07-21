@@ -1,15 +1,23 @@
 // Paste this into the Firebase console:
 // Firestore Database -> Rules -> replace contents -> Publish
 //
-// This restricts every document to the signed-in user who owns it — nobody
-// else can read or write your tasks, articles, or notes, even though the
-// Firebase config in this repo is public.
+// Locked to a single owner account. The Firebase web config in this repo is
+// public (that's normal/expected), so anyone who finds the site URL could in
+// theory register their own account — but this rule means even a real,
+// signed-in account gets PERMISSION_DENIED on every read/write unless its
+// uid matches OWNER_UID below. Only the owner's data ever exists or is
+// reachable.
+//
+// If you ever want to add a second trusted device/person, add their uid to
+// the list below instead of replacing this one.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId}/{collection}/{docId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null
+        && request.auth.uid == userId
+        && request.auth.uid in ["B6xG8P5gsnfA7mqEMmjZNysn0m03"]; // owner account
     }
   }
 }
