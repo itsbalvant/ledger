@@ -161,9 +161,10 @@ export function initNotes({ root, uid, showToast }) {
     grid.appendChild(newTextCard);
     grid.appendChild(newDrawCard);
 
-    for (const n of notes) {
+    notes.forEach((n, i) => {
       const card = document.createElement("button");
-      card.className = "note-card";
+      card.className = "note-card anim-in";
+      card.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
       card.style.textAlign = "left";
       card.style.border = "1px solid var(--border)";
       card.innerHTML = `
@@ -187,7 +188,7 @@ export function initNotes({ root, uid, showToast }) {
       meta.textContent = n.updatedAt?.toDate ? n.updatedAt.toDate().toLocaleDateString() : "";
       card.addEventListener("click", () => openEditor(n));
       grid.appendChild(card);
-    }
+    });
   }
 
   function makeNewCard(label, glyph, onClick) {

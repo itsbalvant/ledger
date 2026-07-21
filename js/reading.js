@@ -28,9 +28,10 @@ export function initReading({ root, uid, showToast }) {
     grid.innerHTML = "";
     emptyState.classList.toggle("hidden", visible.length > 0);
 
-    for (const a of visible) {
+    visible.forEach((a, i) => {
       const card = document.createElement("div");
-      card.className = "article-card" + (a.read ? " read" : "");
+      card.className = "article-card anim-in" + (a.read ? " read" : "");
+      card.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
       const domain = domainOf(a.url);
       card.innerHTML = `
         <div class="article-top">
@@ -65,7 +66,7 @@ export function initReading({ root, uid, showToast }) {
         deleteItem(uid, "articles", a.id).catch((e) => showToast(e.message));
       });
       grid.appendChild(card);
-    }
+    });
   }
 
   async function addArticle() {

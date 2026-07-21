@@ -35,9 +35,10 @@ export function initTasks({ root, uid, showToast }) {
     list.innerHTML = "";
     emptyState.classList.toggle("hidden", visible.length > 0);
 
-    for (const t of visible) {
+    visible.forEach((t, i) => {
       const li = document.createElement("li");
-      li.className = "task-item" + (t.done ? " done" : "");
+      li.className = "task-item anim-in" + (t.done ? " done" : "");
+      li.style.setProperty("--stagger", Math.min(i, 10) * 25 + "ms");
       li.draggable = true;
       li.dataset.id = t.id;
 
@@ -76,7 +77,7 @@ export function initTasks({ root, uid, showToast }) {
       });
 
       list.appendChild(li);
-    }
+    });
   }
 
   async function reorder(sourceId, targetId) {

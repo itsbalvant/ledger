@@ -1,4 +1,4 @@
-import { initFirebase, firebaseConfigured, getAuthInstance } from "./db.js";
+import { initFirebase, firebaseConfigured, getAuthInstance, exportUserData } from "./db.js";
 import { onAuthChange, register, login, logout, resetPassword, friendlyAuthError } from "./auth.js";
 import { initTasks } from "./tasks.js";
 import { initReading } from "./reading.js";
@@ -97,7 +97,7 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
   }
   authError.classList.remove("show");
   submitBtn.disabled = true;
-  submitBtn.textContent = "Please wait…";
+  submitBtn.innerHTML = '<span class="btn-spinner"></span>';
   try {
     if (mode === "register") {
       await register(nameInput.value.trim(), emailInput.value.trim(), passwordInput.value);
@@ -127,8 +127,11 @@ const avatarBtn = document.getElementById("avatar-btn");
 const settingsBackdrop = document.getElementById("settings-backdrop");
 const closeSettingsBtn = document.getElementById("close-settings-btn");
 const logoutBtn = document.getElementById("logout-btn");
+const exportBtn = document.getElementById("export-btn");
 const userEmailEl = document.getElementById("user-email");
 const avatarInitial = document.getElementById("avatar-initial");
+
+let currentUser = null;
 
 settingsBtn.addEventListener("click", () => settingsBackdrop.classList.remove("hidden"));
 avatarBtn.addEventListener("click", () => settingsBackdrop.classList.remove("hidden"));
@@ -141,6 +144,31 @@ logoutBtn.addEventListener("click", async () => {
   settingsBackdrop.classList.add("hidden");
 });
 
+exportBtn.addEventListener("click", async () => {
+  if (!currentUser) return;
+  exportBtn.disabled = true;
+  const original = exportBtn.textContent;
+  exportBtn.textContent = "Exporting…";
+  try {
+    const data = await exportUserData(currentUser.uid);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ledger-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast("Backup downloaded");
+  } catch (e) {
+    showToast("Export failed: " + e.message);
+  } finally {
+    exportBtn.disabled = false;
+    exportBtn.textContent = original;
+  }
+});
+
 /* ---------------- Wire feature modules to auth state ---------------- */
 let activeModules = [];
 function teardownModules() {
@@ -151,6 +179,7 @@ function teardownModules() {
 if (firebaseConfigured) {
   onAuthChange((user) => {
     teardownModules();
+    currentUser = user;
     if (user) {
       authScreen.classList.add("hidden");
       appShell.classList.remove("hidden");

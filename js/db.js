@@ -13,6 +13,7 @@ import {
   onSnapshot,
   query,
   orderBy,
+  getDocs,
   serverTimestamp,
   enableIndexedDbPersistence,
 } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
@@ -78,4 +79,24 @@ export async function updateItem(uid, name, id, data) {
 
 export async function deleteItem(uid, name, id) {
   return deleteDoc(doc(getDb(), "users", uid, name, id));
+}
+
+const EXPORT_COLLECTIONS = ["tasks", "articles", "notes", "expenses", "investments"];
+
+function toPlainValue(v) {
+  return v && typeof v.toDate === "function" ? v.toDate().toISOString() : v;
+}
+
+export async function exportUserData(uid) {
+  const result = { exportedAt: new Date().toISOString() };
+  for (const name of EXPORT_COLLECTIONS) {
+    const snap = await getDocs(col(uid, name));
+    result[name] = snap.docs.map((d) => {
+      const data = d.data();
+      const clean = { id: d.id };
+      for (const [k, v] of Object.entries(data)) clean[k] = toPlainValue(v);
+      return clean;
+    });
+  }
+  return result;
 }

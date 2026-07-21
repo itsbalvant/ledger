@@ -121,9 +121,10 @@ export function initFinance({ root, uid, showToast }) {
     const sorted = [...expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     expenseEmpty.classList.toggle("hidden", sorted.length > 0);
     expenseList.innerHTML = "";
-    for (const e of sorted) {
+    sorted.forEach((e, i) => {
       const li = document.createElement("li");
-      li.className = "expense-row";
+      li.className = "expense-row anim-in";
+      li.style.setProperty("--stagger", Math.min(i, 10) * 20 + "ms");
       li.innerHTML = `
         <span class="cat-dot" style="background:${CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other}"></span>
         <div class="info">
@@ -145,7 +146,7 @@ export function initFinance({ root, uid, showToast }) {
         deleteItem(uid, "expenses", e.id).catch((err) => showToast(err.message));
       });
       expenseList.appendChild(li);
-    }
+    });
   }
 
   function formatDate(iso) {
@@ -206,9 +207,10 @@ export function initFinance({ root, uid, showToast }) {
       group.querySelector(".type-total").textContent = money(total);
       const list = group.querySelector(".investment-list");
 
-      for (const i of items) {
+      items.forEach((inv, idx) => {
         const row = document.createElement("div");
-        row.className = "investment-row";
+        row.className = "investment-row anim-in";
+        row.style.setProperty("--stagger", Math.min(idx, 10) * 20 + "ms");
         row.innerHTML = `
           <div class="info">
             <div class="type-label"></div>
@@ -218,14 +220,14 @@ export function initFinance({ root, uid, showToast }) {
             <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         `;
-        row.querySelector(".type-label").textContent = i.name || type;
-        row.querySelector(".amount").textContent = money(i.amount);
+        row.querySelector(".type-label").textContent = inv.name || type;
+        row.querySelector(".amount").textContent = money(inv.amount);
         row.querySelector(".icon-x").addEventListener("click", () => {
-          if (!confirm(`Delete "${i.name || type}"?`)) return;
-          deleteItem(uid, "investments", i.id).catch((err) => showToast(err.message));
+          if (!confirm(`Delete "${inv.name || type}"?`)) return;
+          deleteItem(uid, "investments", inv.id).catch((err) => showToast(err.message));
         });
         list.appendChild(row);
-      }
+      });
       investmentGroups.appendChild(group);
     }
   }
