@@ -171,6 +171,7 @@ const logoutBtn = document.getElementById("logout-btn");
 const exportBtn = document.getElementById("export-btn");
 const userEmailEl = document.getElementById("user-email");
 const avatarInitial = document.getElementById("avatar-initial");
+const profileAvatarInitial = document.getElementById("profile-avatar-initial");
 
 let currentUser = null;
 
@@ -225,7 +226,9 @@ if (firebaseConfigured) {
       authScreen.classList.add("hidden");
       appShell.classList.remove("hidden");
       userEmailEl.textContent = user.email || "";
-      avatarInitial.textContent = (user.displayName || user.email || "?")[0].toUpperCase();
+      const initial = (user.displayName || user.email || "?")[0].toUpperCase();
+      avatarInitial.textContent = initial;
+      profileAvatarInitial.textContent = initial;
 
       activeModules.push(initTasks({ root: document.getElementById("view-tasks"), uid: user.uid, showToast }));
       activeModules.push(initReading({ root: document.getElementById("view-reading"), uid: user.uid, showToast }));
