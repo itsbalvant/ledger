@@ -714,6 +714,47 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .investment-group-header .type-name { font-size: 13px; font-weight: 700; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
 .investment-group-header .type-total { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+.icon-edit, .icon-save {
+  width: 30px; height: 30px; border-radius: 8px; background: none; color: var(--ink-faint);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.icon-edit svg, .icon-save svg { width: 15px; height: 15px; }
+.icon-edit:hover { background: var(--bg-sunken); color: var(--accent); }
+.icon-save:hover { background: var(--bg-sunken); color: var(--green); }
+
+.expense-row-edit, .investment-row-edit {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  background: var(--bg-elevated); border: 1.5px solid var(--accent);
+  border-radius: var(--radius-md); padding: 10px 12px;
+}
+.expense-row-edit input, .expense-row-edit select,
+.investment-row-edit input, .investment-row-edit select {
+  border: none; background: var(--bg-sunken); border-radius: 8px;
+  padding: 8px 10px; font-size: 13.5px;
+}
+.expense-row-edit .edit-note, .investment-row-edit .edit-name { flex: 1; min-width: 110px; }
+.expense-row-edit .edit-amount, .investment-row-edit .edit-amount { width: 90px; }
+
+/* ---------- Period navigation (Expenses) ---------- */
+.period-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.period-nav-controls { display: flex; align-items: center; gap: 4px; }
+.period-arrow {
+  width: 30px; height: 30px; border-radius: 50%; background: var(--bg-sunken); border: none;
+  color: var(--ink-soft); font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s var(--ease);
+}
+.period-arrow:hover { background: var(--border); }
+.period-arrow:disabled { opacity: .4; pointer-events: none; }
+.period-label { font-size: 13.5px; font-weight: 700; min-width: 108px; text-align: center; }
+.period-total-row {
+  font-size: 12.5px; color: var(--ink-faint); margin: 0 2px 12px;
+  min-height: 1.2em;
+}
+
 /* ============================================================
    Settings sheet
    ============================================================ */

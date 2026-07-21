@@ -1,9 +1,10 @@
-import { watchCollection, addItem, deleteItem } from "./db.js";
+import { watchCollection, addItem, updateItem, deleteItem } from "./db.js";
 
 // Assumes INR — change this one constant if you'd rather see a different symbol.
 const CURRENCY = "₹";
 const LOCALE = "en-IN";
 
+const CATEGORIES = ["Food", "Transport", "Shopping", "Bills", "Health", "Entertainment", "Other"];
 const CATEGORY_COLORS = {
   Food: "#b5502f",
   Transport: "#3b6ea5",
@@ -18,6 +19,33 @@ const INVESTMENT_TYPES = ["FD", "Bonds", "Stocks", "Savings", "Other"];
 function money(n) {
   const v = Number(n) || 0;
   return CURRENCY + Math.round(v).toLocaleString(LOCALE);
+}
+
+function escapeAttr(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+/* ---------------- Period navigation helpers ---------------- */
+function periodKey(mode, dateStr) {
+  if (!dateStr) return null;
+  if (mode === "day") return dateStr;
+  if (mode === "month") return dateStr.slice(0, 7);
+  if (mode === "year") return dateStr.slice(0, 4);
+  return "all";
+}
+function shiftAnchor(mode, anchor, dir) {
+  const d = new Date(anchor + "T00:00:00");
+  if (mode === "day") d.setDate(d.getDate() + dir);
+  else if (mode === "month") d.setMonth(d.getMonth() + dir);
+  else if (mode === "year") d.setFullYear(d.getFullYear() + dir);
+  return d.toISOString().slice(0, 10);
+}
+function periodLabel(mode, anchor) {
+  const d = new Date(anchor + "T00:00:00");
+  if (mode === "day") return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+  if (mode === "month") return d.toLocaleDateString(undefined, { year: "numeric", month: "long" });
+  if (mode === "year") return String(d.getFullYear());
+  return "All time";
 }
 
 export function initFinance({ root, uid, showToast }) {
@@ -40,6 +68,12 @@ export function initFinance({ root, uid, showToast }) {
   const expenseList = root.querySelector("#expense-list");
   const expenseEmpty = root.querySelector("#expense-empty");
 
+  const periodModeToggle = root.querySelector("#period-mode-toggle");
+  const periodPrevBtn = root.querySelector("#period-prev");
+  const periodNextBtn = root.querySelector("#period-next");
+  const periodLabelEl = root.querySelector("#period-label");
+  const periodTotalRow = root.querySelector("#period-total-row");
+
   const invType = root.querySelector("#investment-type");
   const invName = root.querySelector("#investment-name");
   const invAmount = root.querySelector("#investment-amount");
@@ -49,6 +83,10 @@ export function initFinance({ root, uid, showToast }) {
 
   let expenses = [];
   let investments = [];
+  let editingExpenseId = null;
+  let editingInvestmentId = null;
+  let periodMode = "month"; // day | month | year | all
+  let periodAnchor = new Date().toISOString().slice(0, 10);
 
   expDate.value = new Date().toISOString().slice(0, 10);
 
@@ -117,11 +155,84 @@ export function initFinance({ root, uid, showToast }) {
   }
 
   /* ---------------- Expenses ---------------- */
+  periodModeToggle.querySelectorAll("button").forEach((b) => {
+    b.addEventListener("click", () => {
+      periodMode = b.dataset.mode;
+      periodModeToggle.querySelectorAll("button").forEach((x) => x.classList.toggle("active", x === b));
+      renderExpenses();
+    });
+  });
+  periodPrevBtn.addEventListener("click", () => {
+    periodAnchor = shiftAnchor(periodMode, periodAnchor, -1);
+    renderExpenses();
+  });
+  periodNextBtn.addEventListener("click", () => {
+    periodAnchor = shiftAnchor(periodMode, periodAnchor, 1);
+    renderExpenses();
+  });
+
+  function buildExpenseEditRow(e) {
+    const li = document.createElement("li");
+    li.className = "expense-row-edit";
+    li.innerHTML = `
+      <input type="number" inputmode="decimal" step="0.01" class="edit-amount" value="${e.amount}">
+      <select class="edit-category">
+        ${CATEGORIES.map((c) => `<option${c === e.category ? " selected" : ""}>${c}</option>`).join("")}
+      </select>
+      <input type="date" class="edit-date" value="${e.date || ""}">
+      <input type="text" class="edit-note" placeholder="Note" value="${escapeAttr(e.note)}">
+      <button class="icon-save" aria-label="Save"><svg viewBox="0 0 20 20"><use href="#icon-check"/></svg></button>
+      <button class="icon-x" aria-label="Cancel"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg></button>
+    `;
+    li.querySelector(".icon-save").addEventListener("click", async () => {
+      const amount = parseFloat(li.querySelector(".edit-amount").value);
+      if (!amount || amount <= 0) {
+        showToast("Enter a valid amount");
+        return;
+      }
+      try {
+        await updateItem(uid, "expenses", e.id, {
+          amount,
+          category: li.querySelector(".edit-category").value,
+          date: li.querySelector(".edit-date").value || e.date,
+          note: li.querySelector(".edit-note").value.trim(),
+        });
+        editingExpenseId = null;
+        renderExpenses();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    li.querySelector(".icon-x").addEventListener("click", () => {
+      editingExpenseId = null;
+      renderExpenses();
+    });
+    return li;
+  }
+
   function renderExpenses() {
-    const sorted = [...expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const isAll = periodMode === "all";
+    periodPrevBtn.disabled = isAll;
+    periodNextBtn.disabled = isAll;
+    periodLabelEl.textContent = isAll ? "All time" : periodLabel(periodMode, periodAnchor);
+
+    const filtered = isAll
+      ? expenses
+      : expenses.filter((e) => periodKey(periodMode, e.date) === periodKey(periodMode, periodAnchor));
+    const sorted = [...filtered].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+    const periodTotal = filtered.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+    periodTotalRow.textContent = sorted.length
+      ? `${money(periodTotal)} across ${sorted.length} transaction${sorted.length === 1 ? "" : "s"}`
+      : "";
+
     expenseEmpty.classList.toggle("hidden", sorted.length > 0);
     expenseList.innerHTML = "";
     sorted.forEach((e, i) => {
+      if (e.id === editingExpenseId) {
+        expenseList.appendChild(buildExpenseEditRow(e));
+        return;
+      }
       const li = document.createElement("li");
       li.className = "expense-row anim-in";
       li.style.setProperty("--stagger", Math.min(i, 8) * 12 + "ms");
@@ -133,6 +244,9 @@ export function initFinance({ root, uid, showToast }) {
         </div>
         <span class="date-chip"></span>
         <span class="amount"></span>
+        <button class="icon-edit" aria-label="Edit">
+          <svg viewBox="0 0 20 20"><use href="#icon-edit"/></svg>
+        </button>
         <button class="icon-x" aria-label="Delete">
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
@@ -141,6 +255,10 @@ export function initFinance({ root, uid, showToast }) {
       if (e.note) li.querySelector(".note").textContent = e.note;
       li.querySelector(".date-chip").textContent = formatDate(e.date);
       li.querySelector(".amount").textContent = money(e.amount);
+      li.querySelector(".icon-edit").addEventListener("click", () => {
+        editingExpenseId = e.id;
+        renderExpenses();
+      });
       li.querySelector(".icon-x").addEventListener("click", () => {
         if (!confirm("Delete this expense?")) return;
         deleteItem(uid, "expenses", e.id).catch((err) => showToast(err.message));
@@ -185,6 +303,43 @@ export function initFinance({ root, uid, showToast }) {
   );
 
   /* ---------------- Investments ---------------- */
+  function buildInvestmentEditRow(inv, type) {
+    const row = document.createElement("div");
+    row.className = "investment-row-edit";
+    row.innerHTML = `
+      <select class="edit-type">
+        ${INVESTMENT_TYPES.map((t) => `<option${t === inv.type ? " selected" : ""}>${t}</option>`).join("")}
+      </select>
+      <input type="text" class="edit-name" placeholder="Name" value="${escapeAttr(inv.name)}">
+      <input type="number" inputmode="decimal" step="0.01" class="edit-amount" value="${inv.amount}">
+      <button class="icon-save" aria-label="Save"><svg viewBox="0 0 20 20"><use href="#icon-check"/></svg></button>
+      <button class="icon-x" aria-label="Cancel"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg></button>
+    `;
+    row.querySelector(".icon-save").addEventListener("click", async () => {
+      const amount = parseFloat(row.querySelector(".edit-amount").value);
+      if (!amount || amount <= 0) {
+        showToast("Enter a valid amount");
+        return;
+      }
+      try {
+        await updateItem(uid, "investments", inv.id, {
+          type: row.querySelector(".edit-type").value,
+          name: row.querySelector(".edit-name").value.trim(),
+          amount,
+        });
+        editingInvestmentId = null;
+        renderInvestments();
+      } catch (err) {
+        showToast(err.message);
+      }
+    });
+    row.querySelector(".icon-x").addEventListener("click", () => {
+      editingInvestmentId = null;
+      renderInvestments();
+    });
+    return row;
+  }
+
   function renderInvestments() {
     investmentEmpty.classList.toggle("hidden", investments.length > 0);
     investmentGroups.innerHTML = "";
@@ -208,6 +363,10 @@ export function initFinance({ root, uid, showToast }) {
       const list = group.querySelector(".investment-list");
 
       items.forEach((inv, idx) => {
+        if (inv.id === editingInvestmentId) {
+          list.appendChild(buildInvestmentEditRow(inv, type));
+          return;
+        }
         const row = document.createElement("div");
         row.className = "investment-row anim-in";
         row.style.setProperty("--stagger", Math.min(idx, 8) * 12 + "ms");
@@ -216,12 +375,19 @@ export function initFinance({ root, uid, showToast }) {
             <div class="type-label"></div>
           </div>
           <span class="amount"></span>
+          <button class="icon-edit" aria-label="Edit">
+            <svg viewBox="0 0 20 20"><use href="#icon-edit"/></svg>
+          </button>
           <button class="icon-x" aria-label="Delete">
             <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         `;
         row.querySelector(".type-label").textContent = inv.name || type;
         row.querySelector(".amount").textContent = money(inv.amount);
+        row.querySelector(".icon-edit").addEventListener("click", () => {
+          editingInvestmentId = inv.id;
+          renderInvestments();
+        });
         row.querySelector(".icon-x").addEventListener("click", () => {
           if (!confirm(`Delete "${inv.name || type}"?`)) return;
           deleteItem(uid, "investments", inv.id).catch((err) => showToast(err.message));

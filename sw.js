@@ -1,4 +1,4 @@
-const CACHE = "ledger-v6";
+const CACHE = "ledger-v7";
 const SCOPE = self.registration.scope; // works under a GitHub Pages subpath too
 const PRECACHE_URLS = [
   "",
@@ -39,18 +39,19 @@ self.addEventListener("fetch", (event) => {
   // Never intercept Firebase/Google API calls — always go to the network.
   if (url.origin !== self.location.origin) return;
 
+  // Network-first: this app ships frequent fixes, and a cache-first
+  // strategy risks silently running stale JS (including auth logic)
+  // until some later background refresh catches up. Always prefer a
+  // fresh copy when online; only fall back to the cache when offline.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      const network = fetch(request)
-        .then((response) => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached || caches.match(new URL("index.html", SCOPE).toString()));
-      return cached || network;
-    })
+    fetch(request)
+      .then((response) => {
+        if (response && response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(request).then((cached) => cached || caches.match(new URL("index.html", SCOPE).toString())))
   );
 });

@@ -145,6 +145,13 @@ document.getElementById("auth-form").addEventListener("submit", async (e) => {
     } else {
       await login(emailInput.value.trim(), passwordInput.value);
     }
+    // The onAuthStateChanged listener normally flips the screen almost
+    // immediately, but don't leave the user stuck on "Welcome back" if it's
+    // slow or misses a beat for any reason — check directly and recover.
+    setTimeout(() => {
+      const u = getAuthInstance().currentUser;
+      if (u && appShell.classList.contains("hidden")) enterApp(u);
+    }, 1200);
   } catch (err) {
     authError.textContent = friendlyAuthError(err);
     authError.classList.add("show");
@@ -218,25 +225,39 @@ function teardownModules() {
   activeModules = [];
 }
 
+// Single source of truth for "a user is signed in" -> show the app shell.
+// Idempotent by uid so it's safe to call this both from the Firebase
+// onAuthStateChanged listener AND as a defensive fallback after a
+// successful login/register (see below) without double-initializing.
+let shownForUid = null;
+function enterApp(user) {
+  if (shownForUid === user.uid) return;
+  shownForUid = user.uid;
+  teardownModules();
+  currentUser = user;
+  authScreen.classList.add("hidden");
+  appShell.classList.remove("hidden");
+  userEmailEl.textContent = user.email || "";
+  const initial = (user.displayName || user.email || "?")[0].toUpperCase();
+  avatarInitial.textContent = initial;
+  profileAvatarInitial.textContent = initial;
+
+  activeModules.push(initTasks({ root: document.getElementById("view-tasks"), uid: user.uid, showToast }));
+  activeModules.push(initReading({ root: document.getElementById("view-reading"), uid: user.uid, showToast }));
+  activeModules.push(initFinance({ root: document.getElementById("view-finance"), uid: user.uid, showToast }));
+}
+function exitApp() {
+  shownForUid = null;
+  teardownModules();
+  currentUser = null;
+  appShell.classList.add("hidden");
+  authScreen.classList.remove("hidden");
+}
+
 if (firebaseConfigured) {
   onAuthChange((user) => {
-    teardownModules();
-    currentUser = user;
-    if (user) {
-      authScreen.classList.add("hidden");
-      appShell.classList.remove("hidden");
-      userEmailEl.textContent = user.email || "";
-      const initial = (user.displayName || user.email || "?")[0].toUpperCase();
-      avatarInitial.textContent = initial;
-      profileAvatarInitial.textContent = initial;
-
-      activeModules.push(initTasks({ root: document.getElementById("view-tasks"), uid: user.uid, showToast }));
-      activeModules.push(initReading({ root: document.getElementById("view-reading"), uid: user.uid, showToast }));
-      activeModules.push(initFinance({ root: document.getElementById("view-finance"), uid: user.uid, showToast }));
-    } else {
-      appShell.classList.add("hidden");
-      authScreen.classList.remove("hidden");
-    }
+    if (user) enterApp(user);
+    else exitApp();
   });
 }
 
