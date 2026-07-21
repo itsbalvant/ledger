@@ -322,7 +322,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   background: var(--bg-sunken); color: var(--ink-soft); border-radius: 12px;
 }
 .btn-icon:hover { background: var(--border); }
-.btn-danger { background: transparent; color: var(--red); }
 
 .auth-switch {
   margin-top: 20px;
@@ -625,111 +624,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .article-actions .btn { flex: 1; padding: 9px; font-size: 13px; }
 
 /* ============================================================
-   Notes
-   ============================================================ */
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
-}
-.note-card {
-  aspect-ratio: 4/5;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  position: relative;
-  transition: transform .18s var(--ease), box-shadow .18s var(--ease);
-}
-@media (hover: hover) {
-  .note-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lift); }
-}
-.note-card h3 { font-size: 14.5px; font-weight: 700; margin-bottom: 8px; }
-.note-preview-text {
-  font-size: 12.5px; color: var(--ink-soft); line-height: 1.5;
-  overflow: hidden; flex: 1;
-}
-.note-preview-canvas { flex: 1; border-radius: 10px; overflow: hidden; background: var(--bg-sunken); }
-.note-preview-canvas img { width: 100%; height: 100%; object-fit: cover; }
-.note-meta { font-size: 10.5px; color: var(--ink-faint); margin-top: 8px; }
-.note-type-badge {
-  position: absolute; top: 12px; right: 12px;
-  font-size: 10px; padding: 3px 8px; border-radius: 999px;
-  background: var(--bg-sunken); color: var(--ink-faint); font-weight: 700;
-}
-.new-note-card {
-  border: 1.5px dashed var(--border);
-  background: none;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 6px; color: var(--ink-faint); font-weight: 600; font-size: 13px;
-  box-shadow: none;
-}
-.new-note-card:hover { border-color: var(--accent); color: var(--accent); }
-.new-note-card .plus { font-size: 26px; }
-
-/* Note editor overlay */
-#note-editor {
-  position: fixed; inset: 0; background: var(--bg);
-  z-index: 50; display: flex; flex-direction: column;
-}
-#note-editor.hidden { display: none; }
-.note-editor-bar {
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
-  flex-shrink: 0; background: var(--bg-elevated);
-}
-.note-editor-bar input.note-title {
-  flex: 1; border: none; background: none; font-size: 18px; font-weight: 700;
-  font-family: var(--font-serif);
-}
-.note-editor-bar input.note-title:focus { outline: none; }
-.note-editor-body { flex: 1; overflow: hidden; position: relative; }
-textarea.note-textarea {
-  width: 100%; height: 100%; border: none; resize: none; padding: 28px 36px;
-  font-size: 16px; line-height: 1.7; background: none;
-}
-textarea.note-textarea:focus { outline: none; }
-
-.canvas-wrap {
-  position: absolute; inset: 0; touch-action: none;
-  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
-}
-#draw-canvas {
-  width: 100%; height: 100%; display: block; background: var(--bg-elevated); touch-action: none;
-  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
-}
-
-.draw-toolbar {
-  position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
-  background: var(--bg-elevated); border: 1px solid var(--border);
-  border-radius: 999px; box-shadow: var(--shadow-lift);
-  display: flex; align-items: center; gap: 6px; padding: 8px 10px;
-  z-index: 5;
-}
-.draw-toolbar .divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
-.swatch {
-  width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; padding: 0;
-}
-.swatch.selected { border-color: var(--ink); }
-.width-btn {
-  width: 32px; height: 32px; border-radius: 50%; background: var(--bg-sunken); border: none;
-  display: flex; align-items: center; justify-content: center;
-}
-.width-btn .dot { border-radius: 50%; background: var(--ink-soft); }
-.width-btn.selected { background: var(--accent-soft); }
-.width-btn.selected .dot { background: var(--accent); }
-.tool-btn {
-  width: 36px; height: 36px; border-radius: 50%; background: none; border: none;
-  display: flex; align-items: center; justify-content: center; color: var(--ink-soft);
-}
-.tool-btn.selected { background: var(--ink); color: var(--bg); }
-.tool-btn svg { width: 18px; height: 18px; }
-
-/* ============================================================
    Finance
    ============================================================ */
 .finance-tabs { display: flex; gap: 8px; margin: 0 36px 20px; flex-shrink: 0; }
@@ -888,7 +782,6 @@ textarea.note-textarea:focus { outline: none; }
   .quick-add { margin: 0 18px 16px; flex-wrap: wrap; }
   .filter-row { margin: 0 18px 14px; }
   .finance-tabs { margin: 0 18px 16px; }
-  .notes-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
 
 @media (max-width: 480px) {

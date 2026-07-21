@@ -1,7 +1,7 @@
 {
-  "name": "Ledger — Tasks, Reading & Notes",
+  "name": "Ledger — Tasks, Reading & Finance",
   "short_name": "Ledger",
-  "description": "Tasks, reading list, and handwritten notes — built for iPad and Apple Pencil.",
+  "description": "Tasks, reading list, and personal finance tracking — built for iPad.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

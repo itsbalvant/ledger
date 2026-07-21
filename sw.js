@@ -1,4 +1,4 @@
-const CACHE = "ledger-v4";
+const CACHE = "ledger-v5";
 const SCOPE = self.registration.scope; // works under a GitHub Pages subpath too
 const PRECACHE_URLS = [
   "",
@@ -9,8 +9,6 @@ const PRECACHE_URLS = [
   "js/db.js",
   "js/tasks.js",
   "js/reading.js",
-  "js/notes.js",
-  "js/canvas.js",
   "js/finance.js",
   "js/firebase-config.js",
   "manifest.json",

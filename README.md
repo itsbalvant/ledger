@@ -1,7 +1,7 @@
 # Ledger
 
-A fast, private space for tasks, a reading list, and notes (typed or handwritten
-with Apple Pencil) — built to run on GitHub Pages and feel great on iPad.
+A fast, private space for tasks, a reading list, and personal finance
+tracking — built to run on GitHub Pages and feel great on iPad.
 
 No build step, no framework, no server: plain HTML/CSS/JS + Firebase for
 accounts and syncing your data across devices.
@@ -41,7 +41,7 @@ From this folder:
 python3 -m http.server 8080
 ```
 Then open `http://localhost:8080`, register an account, and add a
-task/article/note to confirm everything syncs (works once Email/Password
+task/article/expense to confirm everything syncs (works once Email/Password
 sign-in is enabled above).
 
 ## Deploy to GitHub Pages
@@ -66,28 +66,17 @@ Open the GitHub Pages URL in Safari on your iPad → tap the **Share** icon →
 **Add to Home Screen**. It launches full-screen like a native app and keeps
 working (read-only for cached content) if you briefly lose connection.
 
-## Using it with Apple Pencil
-
-- In **Notes**, tap **Sketch** to open a full drawing canvas. Pencil pressure
-  changes stroke width automatically. Use the floating toolbar to change
-  color, thickness, switch to the eraser, undo the last stroke, or clear the
-  page.
-- Text notes, tasks, and the reading list are all Pencil/touch/keyboard
-  friendly, but store plain text — the drawing canvas is where handwriting
-  lives.
-
 ## Project structure
 
 ```
-index.html             App shell: auth screen + tasks/reading/notes views
-css/styles.css          Design system (light/dark, responsive)
+index.html             App shell: auth screen + tasks/reading/finance views
+css/styles.css          Design system (5 color themes, light/dark, responsive)
 js/firebase-config.js   Firebase project keys for notes-app-32682
-js/db.js                Firestore read/write helpers + offline persistence
+js/db.js                Firestore read/write helpers + offline persistence + export
 js/auth.js              Register/login/logout/password reset
 js/tasks.js             Task list logic
 js/reading.js           Reading list logic
-js/notes.js             Notes list + editor wiring
-js/canvas.js            Pressure-aware drawing engine for Pencil notes
+js/finance.js           Expense tracking + investment/net-worth logic
 js/main.js              App bootstrap, navigation, theming
 manifest.json, sw.js, icons/   PWA install + offline shell caching
 firestore.rules, firebase.json, .firebaserc   Security rules + CLI project link
@@ -95,6 +84,5 @@ firestore.rules, firebase.json, .firebaserc   Security rules + CLI project link
 
 ## Notes on the free tier
 
-Firebase's free "Spark" plan comfortably covers personal use of this app
-(tasks/articles/notes for one person). GitHub Pages is free for public
-repositories.
+Firebase's free "Spark" plan comfortably covers personal use of this app.
+GitHub Pages is free for public repositories.

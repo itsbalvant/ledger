@@ -81,7 +81,7 @@ export async function deleteItem(uid, name, id) {
   return deleteDoc(doc(getDb(), "users", uid, name, id));
 }
 
-const EXPORT_COLLECTIONS = ["tasks", "articles", "notes", "expenses", "investments"];
+const EXPORT_COLLECTIONS = ["tasks", "articles", "expenses", "investments"];
 
 function toPlainValue(v) {
   return v && typeof v.toDate === "function" ? v.toDate().toISOString() : v;

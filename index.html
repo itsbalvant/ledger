@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Ledger — Tasks, Reading &amp; Notes</title>
-<meta name="description" content="A fast, private space for tasks, reading list, and handwritten notes — built for iPad and Apple Pencil.">
+<title>Ledger — Tasks, Reading &amp; Finance</title>
+<meta name="description" content="A fast, private space for tasks, a reading list, and personal finance tracking — built for iPad.">
 <meta name="theme-color" content="#b5502f">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -81,10 +81,6 @@
     <button class="nav-btn" data-view="reading">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5S4 3 8 3s6 1.5 6 1.5v15S12 18 8 18s-6 1.5-6 1.5v-15z"/><path d="M22 4.5S20 3 16 3s-6 1.5-6 1.5v15S10 18 14 18s6 1.5 6 1.5v-15z"/></svg>
       <span>Reading</span>
-    </button>
-    <button class="nav-btn" data-view="notes">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      <span>Notes</span>
     </button>
     <button class="nav-btn" data-view="finance">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
@@ -172,25 +168,6 @@
       </div>
     </section>
 
-    <!-- ---------- NOTES ---------- -->
-    <section class="view" id="view-notes">
-      <div class="view-header">
-        <div>
-          <h2>Notes</h2>
-          <div class="sub">Type it, or write it with Pencil</div>
-        </div>
-        <div class="header-actions"><span class="sync-dot synced" title="Synced"></span></div>
-      </div>
-
-      <div class="view-body" style="padding-top:4px;">
-        <div class="notes-grid" id="notes-grid"></div>
-        <div class="empty-state hidden" id="notes-empty">
-          <div class="glyph">✎</div>
-          <p>No notes yet. Start a text note or a sketch above.</p>
-        </div>
-      </div>
-    </section>
-
     <!-- ---------- FINANCE ---------- -->
     <section class="view" id="view-finance">
       <div class="view-header">
@@ -268,44 +245,6 @@
 
       </div>
     </section>
-  </div>
-</div>
-
-<!-- ================= NOTE EDITOR (overlay) ================= -->
-<div id="note-editor" class="hidden">
-  <div class="note-editor-bar">
-    <button class="btn-icon" id="note-close-btn" aria-label="Close">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12.5 5L7.5 10l5 5"/></svg>
-    </button>
-    <input class="note-title" type="text" placeholder="Untitled">
-    <button class="btn-icon btn-danger" id="note-delete-btn" aria-label="Delete note">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5.5h10M8 5.5v-1a1 1 0 011-1h2a1 1 0 011 1v1M6.5 5.5l.6 9a1 1 0 001 .9h3.8a1 1 0 001-.9l.6-9"/></svg>
-    </button>
-  </div>
-  <div class="note-editor-body">
-    <textarea class="note-textarea" placeholder="Start writing…"></textarea>
-    <div class="canvas-wrap hidden">
-      <canvas id="draw-canvas"></canvas>
-      <div class="draw-toolbar">
-        <div class="color-swatches" style="display:flex;gap:6px;"></div>
-        <div class="divider"></div>
-        <div class="width-btns" style="display:flex;gap:6px;"></div>
-        <div class="divider"></div>
-        <button class="tool-btn selected" id="draw-pen" aria-label="Pen">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-        </button>
-        <button class="tool-btn" id="draw-eraser" aria-label="Eraser">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H8l-6-6a2 2 0 010-2.8L13.2 2 22 10.8 13.5 19.3"/></svg>
-        </button>
-        <div class="divider"></div>
-        <button class="tool-btn" id="draw-undo" aria-label="Undo">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h10a5 5 0 015 5v1"/><path d="M3 10l5-5M3 10l5 5"/></svg>
-        </button>
-        <button class="tool-btn" id="draw-clear" aria-label="Clear all">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H8a1 1 0 01-1-1V6"/></svg>
-        </button>
-      </div>
-    </div>
   </div>
 </div>
 
