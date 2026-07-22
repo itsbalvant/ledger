@@ -47,6 +47,7 @@ const PALETTE_ACCENTS = {
   forest: { light: "#3f7d52", dark: "#6fbf82" },
   plum: { light: "#85499c", dark: "#c586d9" },
   slate: { light: "#45505f", dark: "#9fb0c4" },
+  fox: { light: "#f6851b", dark: "#f6851b" },
 };
 const paletteStored = localStorage.getItem("palette") || "terracotta";
 if (paletteStored !== "terracotta") document.documentElement.setAttribute("data-palette", paletteStored);
