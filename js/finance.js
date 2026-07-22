@@ -1,5 +1,6 @@
 import { watchCollection, addItem, updateItem, deleteItem, setItem } from "./db.js";
 import { localDateStr, localMonthStr } from "./date-utils.js";
+import { attachSwipeToDelete } from "./swipe.js";
 
 // Assumes INR — change this one constant if you'd rather see a different symbol.
 const CURRENCY = "₹";
@@ -413,11 +414,11 @@ export function initFinance({ root, uid, showToast }) {
         expenseList.appendChild(buildExpenseEditRow(e));
         return;
       }
-      const li = document.createElement("li");
-      li.className = "expense-row anim-in";
-      li.style.setProperty("--stagger", Math.min(i, 8) * 12 + "ms");
+      const content = document.createElement("div");
+      content.className = "expense-row anim-in";
+      content.style.setProperty("--stagger", Math.min(i, 8) * 12 + "ms");
       const category = e.category || "Other";
-      li.innerHTML = `
+      content.innerHTML = `
         <span class="icon-badge" style="background:${CATEGORY_COLORS[category] || CATEGORY_COLORS.Other}"></span>
         <div class="info">
           <div class="cat"></div>
@@ -432,20 +433,21 @@ export function initFinance({ root, uid, showToast }) {
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       `;
-      li.querySelector(".icon-badge").textContent = category[0];
-      li.querySelector(".cat").textContent = category;
-      if (e.note) li.querySelector(".note").textContent = e.note;
-      li.querySelector(".date-chip").textContent = formatDate(e.date);
-      li.querySelector(".amount").textContent = money(e.amount);
-      li.querySelector(".icon-edit").addEventListener("click", () => {
+      content.querySelector(".icon-badge").textContent = category[0];
+      content.querySelector(".cat").textContent = category;
+      if (e.note) content.querySelector(".note").textContent = e.note;
+      content.querySelector(".date-chip").textContent = formatDate(e.date);
+      content.querySelector(".amount").textContent = money(e.amount);
+      content.querySelector(".icon-edit").addEventListener("click", () => {
         editingExpenseId = e.id;
         renderExpenses();
       });
-      li.querySelector(".icon-x").addEventListener("click", () => {
+      const deleteExpense = () => {
         if (!confirm("Delete this expense?")) return;
         deleteItem(uid, "expenses", e.id).catch((err) => showToast(err.message));
-      });
-      expenseList.appendChild(li);
+      };
+      content.querySelector(".icon-x").addEventListener("click", deleteExpense);
+      expenseList.appendChild(attachSwipeToDelete(content, deleteExpense, { wrapTag: "li" }));
     });
   }
 
@@ -572,11 +574,12 @@ export function initFinance({ root, uid, showToast }) {
           editingInvestmentId = inv.id;
           renderInvestments();
         });
-        row.querySelector(".icon-x").addEventListener("click", () => {
+        const deleteInvestment = () => {
           if (!confirm(`Delete "${inv.name || type}"?`)) return;
           deleteItem(uid, "investments", inv.id).catch((err) => showToast(err.message));
-        });
-        list.appendChild(row);
+        };
+        row.querySelector(".icon-x").addEventListener("click", deleteInvestment);
+        list.appendChild(attachSwipeToDelete(row, deleteInvestment));
       });
       investmentGroups.appendChild(group);
     }
@@ -784,10 +787,11 @@ export function initFinance({ root, uid, showToast }) {
       editingLoanId = loan.id;
       renderLoans();
     });
-    top.querySelector(".icon-x").addEventListener("click", () => {
+    const deleteThisLoan = () => {
       if (!confirm(`Delete this loan with ${loan.person || "this person"}? Its payment history will be removed too.`)) return;
       deleteLoanWithPayments(loan.id);
-    });
+    };
+    top.querySelector(".icon-x").addEventListener("click", deleteThisLoan);
     card.appendChild(top);
 
     const amounts = document.createElement("div");
@@ -884,7 +888,7 @@ export function initFinance({ root, uid, showToast }) {
       card.appendChild(list);
     }
 
-    return card;
+    return attachSwipeToDelete(card, deleteThisLoan);
   }
 
   function renderLoans() {

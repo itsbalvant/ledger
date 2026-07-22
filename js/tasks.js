@@ -1,5 +1,6 @@
 import { watchCollection, addItem, updateItem, deleteItem } from "./db.js";
 import { localDateStr } from "./date-utils.js";
+import { attachSwipeToDelete } from "./swipe.js";
 
 const PRIORITY_ORDER = { high: 0, med: 1, low: 2 };
 
@@ -37,15 +38,13 @@ export function initTasks({ root, uid, showToast }) {
     emptyState.classList.toggle("hidden", visible.length > 0);
 
     visible.forEach((t, i) => {
-      const li = document.createElement("li");
-      li.className = "task-item anim-in" + (t.done ? " done" : "");
-      li.style.setProperty("--stagger", Math.min(i, 8) * 15 + "ms");
-      li.draggable = true;
-      li.dataset.id = t.id;
+      const content = document.createElement("div");
+      content.className = "task-item anim-in" + (t.done ? " done" : "");
+      content.style.setProperty("--stagger", Math.min(i, 8) * 15 + "ms");
 
       const isOverdue = t.dueDate && !t.done && t.dueDate < todayStr();
 
-      li.innerHTML = `
+      content.innerHTML = `
         <button class="task-check" aria-label="Toggle done">
           <svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3 3 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -56,28 +55,30 @@ export function initTasks({ root, uid, showToast }) {
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       `;
-      li.querySelector(".task-text").textContent = t.text;
+      content.querySelector(".task-text").textContent = t.text;
 
-      li.querySelector(".task-check").addEventListener("click", () =>
+      content.querySelector(".task-check").addEventListener("click", () =>
         updateItem(uid, "tasks", t.id, { done: !t.done }).catch((e) => showToast(e.message))
       );
-      li.querySelector(".icon-x").addEventListener("click", () =>
-        deleteItem(uid, "tasks", t.id).catch((e) => showToast(e.message))
-      );
+      const deleteTask = () => deleteItem(uid, "tasks", t.id).catch((e) => showToast(e.message));
+      content.querySelector(".icon-x").addEventListener("click", deleteTask);
 
-      li.addEventListener("dragstart", () => {
+      const wrap = attachSwipeToDelete(content, deleteTask, { wrapTag: "li" });
+      wrap.draggable = true;
+      wrap.dataset.id = t.id;
+      wrap.addEventListener("dragstart", () => {
         dragId = t.id;
-        li.classList.add("dragging");
+        wrap.classList.add("dragging");
       });
-      li.addEventListener("dragend", () => li.classList.remove("dragging"));
-      li.addEventListener("dragover", (e) => e.preventDefault());
-      li.addEventListener("drop", (e) => {
+      wrap.addEventListener("dragend", () => wrap.classList.remove("dragging"));
+      wrap.addEventListener("dragover", (e) => e.preventDefault());
+      wrap.addEventListener("drop", (e) => {
         e.preventDefault();
         if (!dragId || dragId === t.id) return;
         reorder(dragId, t.id);
       });
 
-      list.appendChild(li);
+      list.appendChild(wrap);
     });
   }
 

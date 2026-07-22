@@ -446,6 +446,23 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .chip:not(.active):hover { color: var(--ink); }
 }
 
+/* ---------- Swipe-to-delete ---------- */
+.swipe-wrap {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.swipe-actions {
+  position: absolute; inset: 0; left: auto; width: 84px;
+  display: flex; background: var(--red);
+}
+.swipe-delete-btn {
+  flex: 1; border: none; background: none; color: #ffffff;
+  display: flex; align-items: center; justify-content: center;
+}
+.swipe-delete-btn svg { width: 20px; height: 20px; }
+.swipe-content { position: relative; z-index: 1; }
+
 .task-list { display: flex; flex-direction: column; gap: 8px; }
 .task-item {
   display: flex;
@@ -457,8 +474,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   padding: 14px 16px;
   transition: opacity .2s ease, transform .15s var(--ease), box-shadow .15s var(--ease);
 }
-.task-item[draggable="true"] { cursor: grab; }
-.task-item.dragging { opacity: .4; }
+.swipe-wrap[draggable="true"] { cursor: grab; }
+.swipe-wrap.dragging { opacity: .4; }
 @media (hover: hover) {
   .task-item:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
 }
