@@ -16,6 +16,13 @@ const CATEGORY_COLORS = {
   Other: "#8b877c",
 };
 const INVESTMENT_TYPES = ["FD", "Bonds", "Stocks", "Savings", "Other"];
+const INVESTMENT_TYPE_COLORS = {
+  FD: "#3b82f6",
+  Bonds: "#8b5cf6",
+  Stocks: "#ec4899",
+  Savings: "#1e9e4f",
+  Other: "#8b877c",
+};
 
 function money(n) {
   const v = Number(n) || 0;
@@ -281,7 +288,7 @@ export function initFinance({ root, uid, showToast }) {
       .reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
     statCards.innerHTML = `
-      <div class="stat-card">
+      <div class="stat-card hero">
         <div class="label">Net worth</div>
         <div class="value">${money(netWorth)}</div>
         <div class="sub">${investments.length} holding${investments.length === 1 ? "" : "s"} + lending</div>
@@ -409,8 +416,9 @@ export function initFinance({ root, uid, showToast }) {
       const li = document.createElement("li");
       li.className = "expense-row anim-in";
       li.style.setProperty("--stagger", Math.min(i, 8) * 12 + "ms");
+      const category = e.category || "Other";
       li.innerHTML = `
-        <span class="cat-dot" style="background:${CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other}"></span>
+        <span class="icon-badge" style="background:${CATEGORY_COLORS[category] || CATEGORY_COLORS.Other}"></span>
         <div class="info">
           <div class="cat"></div>
           ${e.note ? `<div class="note"></div>` : ""}
@@ -424,7 +432,8 @@ export function initFinance({ root, uid, showToast }) {
           <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
         </button>
       `;
-      li.querySelector(".cat").textContent = e.category || "Other";
+      li.querySelector(".icon-badge").textContent = category[0];
+      li.querySelector(".cat").textContent = category;
       if (e.note) li.querySelector(".note").textContent = e.note;
       li.querySelector(".date-chip").textContent = formatDate(e.date);
       li.querySelector(".amount").textContent = money(e.amount);
@@ -544,6 +553,7 @@ export function initFinance({ root, uid, showToast }) {
         row.className = "investment-row anim-in";
         row.style.setProperty("--stagger", Math.min(idx, 8) * 12 + "ms");
         row.innerHTML = `
+          <span class="icon-badge" style="background:${INVESTMENT_TYPE_COLORS[type] || INVESTMENT_TYPE_COLORS.Other}"></span>
           <div class="info">
             <div class="type-label"></div>
           </div>
@@ -555,6 +565,7 @@ export function initFinance({ root, uid, showToast }) {
             <svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke-width="2" stroke-linecap="round"/></svg>
           </button>
         `;
+        row.querySelector(".icon-badge").textContent = type[0];
         row.querySelector(".type-label").textContent = inv.name || type;
         row.querySelector(".amount").textContent = money(inv.amount);
         row.querySelector(".icon-edit").addEventListener("click", () => {

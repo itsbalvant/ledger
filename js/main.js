@@ -21,6 +21,12 @@ function showToast(msg) {
 window.showToast = showToast;
 
 /* ---------------- Theme ---------------- */
+// The palette picker (multiple accent themes) was removed in favor of one
+// well-executed light/dark theme — drop any leftover selection so returning
+// visitors don't keep an orphaned data-palette attribute with no matching CSS.
+document.documentElement.removeAttribute("data-palette");
+localStorage.removeItem("palette");
+
 const themeStored = localStorage.getItem("theme");
 if (themeStored) document.documentElement.setAttribute("data-theme", themeStored);
 function setTheme(t) {
@@ -34,40 +40,14 @@ function setTheme(t) {
   document.querySelectorAll(".theme-toggle button").forEach((b) =>
     b.classList.toggle("active", b.dataset.theme === (t || "auto"))
   );
+  updateThemeColorMeta();
 }
 document.querySelectorAll(".theme-toggle button").forEach((b) => {
-  b.addEventListener("click", () => { setTheme(b.dataset.theme); updateThemeColorMeta(); });
+  b.addEventListener("click", () => setTheme(b.dataset.theme));
   b.classList.toggle("active", b.dataset.theme === (themeStored || "auto"));
 });
 
-/* ---------------- Palette ---------------- */
-const PALETTE_ACCENTS = {
-  terracotta: { light: "#b5502f", dark: "#e07a52" },
-  ocean: { light: "#2e6f8e", dark: "#5fb8d9" },
-  forest: { light: "#3f7d52", dark: "#6fbf82" },
-  plum: { light: "#85499c", dark: "#c586d9" },
-  slate: { light: "#45505f", dark: "#9fb0c4" },
-  fox: { light: "#f6851b", dark: "#f6851b" },
-};
-const paletteStored = localStorage.getItem("palette") || "terracotta";
-if (paletteStored !== "terracotta") document.documentElement.setAttribute("data-palette", paletteStored);
-
-function setPalette(p) {
-  if (p === "terracotta") {
-    document.documentElement.removeAttribute("data-palette");
-    localStorage.removeItem("palette");
-  } else {
-    document.documentElement.setAttribute("data-palette", p);
-    localStorage.setItem("palette", p);
-  }
-  document.querySelectorAll(".palette-swatch").forEach((b) => b.classList.toggle("selected", b.dataset.palette === p));
-  updateThemeColorMeta();
-}
-document.querySelectorAll(".palette-swatch").forEach((b) => {
-  b.addEventListener("click", () => setPalette(b.dataset.palette));
-  b.classList.toggle("selected", b.dataset.palette === paletteStored);
-});
-
+const THEME_COLOR = { light: "#7c3aed", dark: "#000000" };
 function isDarkActive() {
   const explicit = document.documentElement.getAttribute("data-theme");
   if (explicit === "dark") return true;
@@ -75,10 +55,8 @@ function isDarkActive() {
   return window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 function updateThemeColorMeta() {
-  const palette = document.documentElement.getAttribute("data-palette") || "terracotta";
-  const accents = PALETTE_ACCENTS[palette] || PALETTE_ACCENTS.terracotta;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", isDarkActive() ? accents.dark : accents.light);
+  if (meta) meta.setAttribute("content", isDarkActive() ? THEME_COLOR.dark : THEME_COLOR.light);
 }
 updateThemeColorMeta();
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeColorMeta);
